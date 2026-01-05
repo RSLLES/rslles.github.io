@@ -80,3 +80,8 @@ markup:
           - - '$'
             - '$'
         enable: true
+
+# required by github-page, see https://gohugo.io/host-and-deploy/host-on-github-pages/
+caches:
+  images:
+    dir: :cacheDir/images
