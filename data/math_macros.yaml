@@ -1,0 +1,3 @@
+"\\R": "\\mathbb{R}"
+"\\N": "\\mathbb{N}"
+"\\bar": "\\overline{#1}"

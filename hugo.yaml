@@ -1,0 +1,82 @@
+baseURL: https://romainseailles.fr
+languageCode: en-us
+title: Romain Séailles
+theme: ["PaperMod"]
+
+params:
+  # Main page options
+  homeInfoParams:
+    Title: Welcome
+    Image: assets/me.jpeg
+
+  socialIcons:
+    - name: "Email"
+      url: "mailto:Loading..."
+      text: "Loading..."
+    - name: "Github"
+      url: "https://github.com/RSLLES"
+      text: "RSLLES"
+    - name: "Linkedin"
+      url: www.linkedin.com/in/romain-séailles-70a6021a1
+      text: "Romain Séailles"
+
+  # Posts options
+  editPost:
+    URL: "https://github.com/<path_to_repo>/content"
+    Text: "Suggest Changes"
+    appendFilePath: true
+  ShowCodeCopyButtons: true
+  comments: true # comments are hijacked for bibliography
+
+# main menu
+menu:
+  main:
+    - identifier: resume
+      name: Résumé
+      url: /resume/
+      weight: 1
+
+    - identifier: publications
+      name: Publications
+      url: /publications/
+      weight: 2
+
+    # - identifier: talks
+    #   name: Talks
+    #   url: /talks/
+    #   weight: 3
+
+    - identifier: posts
+      name: Posts
+      url: /posts/
+      weight: 4
+
+    - identifier: search
+      name: Search
+      url: /search/
+      weight: 5
+
+# required by the search page
+outputs:
+  home:
+    - HTML
+    - RSS
+    - JSON
+
+# enable math mode delimiters
+markup:
+  goldmark:
+    extensions:
+      passthrough:
+        delimiters:
+          block:
+          - - '\['
+            - '\]'
+          - - $$
+            - $$
+          inline:
+          - - '\('
+            - '\)'
+          - - '$'
+            - '$'
+        enable: true

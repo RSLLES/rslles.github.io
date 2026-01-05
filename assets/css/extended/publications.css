@@ -1,0 +1,27 @@
+/* 1. Remove the "Bouncing" effect */
+.pub-entry:active {
+    transform: none !important;
+}
+
+.pub-entry .entry-header h2 {
+    font-size: 24px;
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.pub-entry .entry-content {
+    color: var(--primary);
+    overflow: visible !important;
+    display: block !important;
+    -webkit-line-clamp: unset !important;
+}
+
+.pub-subtitle {
+    /* font-size: 14px; */
+    color: var(--secondary);
+    margin-bottom: 8px;
+}
+
+.pub-footer {
+    font-size: 14px;
+}

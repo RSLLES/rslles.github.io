@@ -1,0 +1,7 @@
+/* Style for the text next to icons */
+.social-icons a .social-text {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--primary);
+}

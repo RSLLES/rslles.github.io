@@ -1,0 +1,23 @@
+{{- $id := .Get 0 -}}
+{{- $ref := "" -}}
+
+{{- if $.Page.Params.bib -}}
+{{- range $.Page.Params.bib -}}
+{{- if eq .id $id }}{{ $ref = . }}{{ end -}}
+{{- end -}}
+{{- end -}}
+
+{{- if $ref -}}
+{{- $authorList := split $ref.author " and " -}}
+{{- $firstAuthorFull := index $authorList 0 -}}
+
+{{- $firstLastName := index (split $firstAuthorFull ",") 0 | strings.TrimSpace -}}
+
+<a href="#bib-{{ $id }}" title="{{ $ref.title }}">
+    {{- $firstLastName -}}
+    {{- if gt (len $authorList) 1 }} et al.{{ end -}}, {{ $ref.year -}}
+</a>
+{{- else -}}
+<span style="color:red; font-weight:bold;">[? {{ $id }}]</span>
+{{- warnf "Missing Citation: %s in %s" $id $.Page.Title -}}
+{{- end -}}

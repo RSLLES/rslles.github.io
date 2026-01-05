@@ -1,0 +1,29 @@
+{{- $profile := .Site.GetPage "/home_info" -}}
+
+{{- with $profile -}}
+<article class="first-entry home-info">
+    <div class="home-info-layout">
+        <div class="home-info-text">
+
+            {{- $img := .Resources.GetMatch .Params.image -}}
+            {{- if $img -}}
+            <div class="home-info-img">
+                <img src="{{ $img.RelPermalink }}" alt="Me 👋">
+            </div>
+            {{- end -}}
+
+            <header class="post-content">
+                <h1>{{ .Title }}</h1>
+            </header>
+
+            <div class="post-content">
+                {{ .Content }}
+            </div>
+
+            <footer class="entry-footer ">
+                {{ partial "social_icons.html" (dict "align" "left") }}
+            </footer>
+        </div>
+    </div>
+</article>
+{{- end -}}

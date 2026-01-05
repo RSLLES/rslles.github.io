@@ -1,0 +1,25 @@
+{{ if .Params.bib }}
+<hr>
+<div class="bibliography post-content">
+    <h2>References</h2>
+    <ul style="list-style: none; padding-left: 0;">
+        {{ range .Params.bib }}
+        <li id="bib-{{ .id }}" class="bib-entry">
+            <span><strong>{{ .author }}</strong>. </span>
+
+            <span>
+                {{- if .url -}}
+                <a href="{{ .url }}" target="_blank">{{ .title }}</a>
+                {{- else -}}
+                {{ .title }}
+                {{- end -}}
+                . </span>
+
+            {{- with .journal }}<em>{{ . }}</em>. {{ end -}}
+
+            {{ .year }}.
+        </li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}

@@ -1,0 +1,76 @@
+/* 1. The Container */
+.home-info-layout {
+    display: block;
+    overflow: hidden;
+    /* Clearfix */
+}
+
+.home-info .entry-content,
+.home-info .entry-header {
+    display: block !important;
+    /* No Flexbox allowed here */
+    overflow: visible !important;
+    /* This allows text to flow UNDER the image */
+    width: auto !important;
+    /* Ensure it doesn't have a fixed width */
+}
+
+.entry-content p {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+/* IMPORTANT: Ensure the inner text container is NOT flex, or float will fail */
+.home-info-text {
+    display: block !important;
+}
+
+/* 2. The Image */
+.home-info-img {
+    float: right;
+    /* This pushes the image to the right */
+    margin-left: 2rem;
+    /* Space between text and image */
+    margin-bottom: 1rem;
+    /* Space below image */
+    margin-top: 0.5rem;
+    /* Optical alignment with the Title */
+
+    /* Shape config */
+    shape-outside: circle(50%);
+    -webkit-shape-outside: circle(50%);
+    width: 200px;
+    /* Define width here on the container */
+    height: 200px;
+}
+
+.home-info-img img {
+    border-radius: 50%;
+    width: 100%;
+    /* Fill the container */
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* 3. Mobile Responsiveness */
+@media screen and (max-width: 768px) {
+    .home-info-img {
+        float: none;
+        margin: 0 auto 20px auto;
+        /* Centers the image */
+        display: block;
+        width: 150px;
+        /* Slightly smaller on mobile */
+        height: 150px;
+    }
+
+    .home-info-text {
+        text-align: center;
+    }
+
+    .entry-footer {
+        display: flex;
+        justify-content: center;
+    }
+}
