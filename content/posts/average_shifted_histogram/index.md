@@ -35,12 +35,12 @@ For 1D data, it is formed by first dividing $\R$ into equal-sized intervals call
 
 Formally, given a fixed bin width $h > 0$ and an origin $t_0$, let $B_k^{(0)} = [t_0 + kh, t_0 + (k+1)h)$ be the k-th interval.
 Given $N$ random samples $\{ x_1, \dots, x_N \}$, 
-we denote by $\nu: \mathcal P(\R) \to \N$ the normalized counting operator of our dataset, that returns the ratio of points belonging to a given subset of $\R$:
+we denote by $\nu: \mathcal P(\R) \to \N$ the normalized counting operator of our dataset, that returns the ratio of points belonging to a given subset $\gE$ of $\R$:
 
-$$ \nu (E) = \frac{1}{N} \sum_{i=1}^N I(x_i \in E) $$
+$$ \nu (\gE) = \frac{1}{N} \sum_{i=1}^N \1(x_i \in \gE) $$
 
 We define the histogram as the following step-wise function:
-$$\hat f(x) = \frac{1}{h} \sum_{k} I(x \in B_k^{(0)}) \nu (B_k^{(0)}) =
+$$\hat f(x) = \frac{1}{h} \sum_{k} \1(x \in B_k^{(0)}) \nu (B_k^{(0)}) =
 \frac{1}{h} \nu (B_k^{(0)}) 
 \; \text{where} \; k \; \text{is such that} \; x \in B_k^{(0)}
 $$
@@ -86,13 +86,13 @@ In other words, the $j$-th histogram $\hat f^{(j)}$ - that is shifted by $jh/m$ 
 This yields the following definition:
 
 $$
-\hat f^{(j)}(x) = \frac{1}{h} \sum_{k} I(x \in B_k^{(j)}) \nu (B_k^{(j)})
+\hat f^{(j)}(x) = \frac{1}{h} \sum_{k} \1(x \in B_k^{(j)}) \nu (B_k^{(j)})
 $$
 
 And the resulting ASH is:
 
 $$
-\hat f(x) = \frac{1}{m} \sum_{j=0}^{m-1} \hat f^{(j)}(x) = \frac{1}{mh} \sum_{j=0}^{m-1} \sum_{k} I(x \in B_k^{(j)}) \nu (B_k^{(j)})
+\hat f(x) = \frac{1}{m} \sum_{j=0}^{m-1} \hat f^{(j)}(x) = \frac{1}{mh} \sum_{j=0}^{m-1} \sum_{k} \1(x \in B_k^{(j)}) \nu (B_k^{(j)})
 $$
 
 
@@ -106,11 +106,11 @@ B_k^{(j)} = \bigcup_{p=0}^{m -1} b_{km+j+p}
 .
 $$
 
-As the $b_p$ are a partition of $\R$, we have $I(x \in B_k^{(j)}) = \sum_{p=0}^{m-1} I(x \in b_{km+j+p})$, from which we can derive $\nu (B_k^{(j)}) = \sum_{p=0}^{m-1} \nu \left( b_{km+j+p} \right)$. 
+As the $b_p$ are a partition of $\R$, we have $\1(x \in B_k^{(j)}) = \sum_{p=0}^{m-1} \1(x \in b_{km+j+p})$, from which we can derive $\nu (B_k^{(j)}) = \sum_{p=0}^{m-1} \nu \left( b_{km+j+p} \right)$. 
 Finally, injecting this definition into $\hat f$ yields:
 
 $$
-\hat f(x) = \frac{1}{mh} \sum_{k} \sum_{j=0}^{m-1} \sum_{p=0}^{m-1} \sum_{q=0}^{m-1} I(x \in b_{km+j+q}) \nu \left( b_{km+j+p} \right)
+\hat f(x) = \frac{1}{mh} \sum_{k} \sum_{j=0}^{m-1} \sum_{p=0}^{m-1} \sum_{q=0}^{m-1} \1(x \in b_{km+j+q}) \nu \left( b_{km+j+p} \right)
 $$
 
 Well, I agree that it does not look simplified at all.
@@ -119,7 +119,7 @@ After careful inspection, **the previous expression of $\hat f(x)$ is only a wei
 If we can find the number of times the count value $\nu \left( b_s \right)$ of a specific bin $b_s$ interacts when $x$ belongs to another anchor bin $b_r$, if we denote this number $C_{s,r}$, then we could re-write this equation in the form:
 
 $$
-\hat f(x) = \frac{1}{mh} \sum_{r} \sum_{s} I(x \in b_{r}) C_{r,s} \nu \left( b_{s} \right)
+\hat f(x) = \frac{1}{mh} \sum_{r} \sum_{s} \1(x \in b_{r}) C_{r,s} \nu \left( b_{s} \right)
 $$
 
 Therefore, let's consider the following question: 
@@ -148,13 +148,13 @@ $$ C_{p-q} = \left( m - |p-q| \right)_+.$$
 Plugging this into our previous equation yields the following form for  
 
 $$
-\hat f(x) = \frac{1}{mh} \sum_{r} \sum_{d} I(x \in b_{r}) C_d \nu \left( b_{k+s} \right)
+\hat f(x) = \frac{1}{mh} \sum_{r} \sum_{d} \1(x \in b_{r}) C_d \nu \left( b_{k+s} \right)
 $$
 
 Ultimately, those derivations lead us to the definition of a new piecewise constant function defined on the atomic bins $b_k$, but **in contrast to a classic histogram, the value associated to each bin is computed by applying a triangular convolution kernel** over the raw counts:
 
 $$
-\hat f(x) = \frac{1}{h} \sum_{k} I(x \in b_{k}) \sum_{d=-m+1}^{m+1}K_d \nu \left( b_{d} \right)
+\hat f(x) = \frac{1}{h} \sum_{k} \1(x \in b_{k}) \sum_{d=-m+1}^{m+1}K_d \nu \left( b_{d} \right)
 \quad \text{where} \quad
 K_d = \left( 1 - \frac{|d|}{m} \right)_+
 $$
@@ -164,7 +164,7 @@ It should be noted that the previous derivations are not rigorous enough to be a
 Another - maybe more intuitive - way to understand this phenomenon is to realize that **ASH effectively convolves two rectangular functions** (also called [boxcar filters](https://en.wikipedia.org/wiki/Rectangular_function)), which naturally **yields a triangular kernel**.
 
 All this theory yields a highly efficient implementation for ASH: instead of managing $m$ histograms concurrently, one can store a single high-resolution histogram of bin size $h/m$, and at the last moment convolve it with a triangular kernel of size $2m−1$.
-Thus, ASH has a $\mathcal O(N)$ computational complexity — similar to a simple histogram — but has a higher cost of $O(mN)$ in memory.
+Thus, ASH has a $\gO(N)$ computational complexity — similar to a simple histogram — but has a higher cost of $\gO(mN)$ in memory.
 
 In practice, while the triangular kernel is the exact mathematical tool, it tends to produce noisy results. It is common practice to substitute it for a smoother kernel, for instance, the triweight kernel, as recommended by {{< citep "scott2010averaged" >}}:
 
