@@ -22,7 +22,7 @@ params:
 
   # Posts options
   editPost:
-    URL: "https://github.com/<path_to_repo>/content"
+    URL: "https://github.com/RSLLES/rslles.github.io/blob/main/content"
     Text: "Suggest Changes"
     appendFilePath: true
   ShowCodeCopyButtons: true
