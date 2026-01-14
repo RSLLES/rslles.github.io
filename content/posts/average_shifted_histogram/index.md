@@ -1,7 +1,7 @@
 ---
 title: "Average shifted histogram"
-date: 2025-12-19
-draft: true
+date: 2026-01-14
+draft: false
 ShowBreadCrumbs: true
 bib:
   - id: "scott1985averaged"
@@ -31,9 +31,9 @@ bib:
 ---
 
 The histogram is without doubt the oldest and most widely used nonparametric density estimation tool - probably thanks to its interpretability and efficient implementation.
-For 1D data, it is formed by first dividing $\R$ into equal sized intervals called *bins*, then counting the number of points falling into each bin, and ultimately reporting the result through a piecewise constant function.
+For 1D data, it is formed by first dividing $\R$ into equal-sized intervals called *bins*, then counting the number of points falling into each bin, and ultimately reporting the result through a piecewise constant function.
 
-Formaly, given a fixed bin width $h > 0$ and an origin $t_0$, let $B_k^{(0)} = [t_0 + kh, t_0 + (k+1)h)$ be the k-th interval.
+Formally, given a fixed bin width $h > 0$ and an origin $t_0$, let $B_k^{(0)} = [t_0 + kh, t_0 + (k+1)h)$ be the k-th interval.
 Given $N$ random samples $\{ x_1, \dots, x_N \}$, 
 we denote by $\nu: \mathcal P(\R) \to \N$ the normalized counting operator of our dataset, that returns the ratio of points belonging to a given subset of $\R$:
 
@@ -51,22 +51,22 @@ The naive histogram implementation computation is extremely efficient:
 for a given value $x_i$, one can compute the corresponding index, $p = \lfloor \frac{x_i}{h} \rfloor$, and increment a pre-allocated array at the corresponding index, `array[p] += 1`. 
 This yields a $\mathcal O(N)$ complexity algorithm - moreover, with only one scan over the data - where $N$ is the number of input data points.
 
-At first glence, histogram is only govern by one parameter (just like more complexe non-parametric distribution estimation methods like KDE), that is the bin size - or bandwitch - $h$.
+At first glance, histogram is only governed by one parameter (just like more complex non-parametric distribution estimation methods like KDE), that is the bin size - or bandwidth - $h$.
 But there is one hidden parameter that is often left aside: **the origin offset $t_0$**.
-While it may seems innofensif, changing $t_0$ may have great consequences on the final graph.
+While it may seem inoffensive, changing $t_0$ may have great consequences on the final graph.
 The following figure ({{< citep "scott2010averaged" >}}) shows histograms of the estimated distance (in feet) of Sammy Sosa’s 36 home runs hit at at home in Chicago’s Wrigley Field among the 66 home runs he scored during the 1998 baseball season. 
-Each histograms has a bin size of 25 feets but three different choice of $t_0$:
+Each histogram has a bin size of 25 feet but three different choices of $t_0$:
 
 ![Figure 1](./t0_impact.jpg)
 
-As one may see, they look very different from each other, highlingting the impact of the choice of $t_0$.
-Furthemore, as shown by {{< citet "freedman1981histogram" >}}, assuming one kowns the sampling density $f$ (which we don't in practice), the "optimal" bin width formula in some sens is: 
+As one may see, they look very different from each other, highlighting the impact of the choice of $t_0$.
+Furthermore, as shown by {{< citet "freedman1981histogram" >}}, assuming one knows the sampling density $f$ (which we don't in practice), the "optimal" bin width formula in some sense is: 
 
 $$
 h^* = \left[ \frac{6}{N\int f'(x)^2 dx} \right]^{1/3}
 $$
 
-One may notice than $t_0$ is not part of this formula; therefore, it makes sens to treat $t_0$ as a nuisance parameter, that should not have such an important impact on the end-result.
+One may notice that $t_0$ is not part of this formula; therefore, it makes sense to treat $t_0$ as a nuisance parameter, that should not have such an important impact on the end-result.
 
 ## Average shifted histogram (ASH)
 
@@ -79,10 +79,10 @@ The result is a smoother histogram with bin size $h/m$, as depicted in the next 
 ![Figure 2](./ash_triangle.png)
 
 
-Let's frame this mathematicaly.
-Following {{< citet "scott1985averaged" >}}, we consider $m$ histograms all with a respective origin shifted by $1/m$-th of the standard bin size $h$, or in other word the origin of the $j$-th histogram with $0 \leq j \leq m - 1$ is $t_0^{(j)} = t_0 + j\frac{h}{m}$.
+Let's frame this mathematically.
+Following {{< citet "scott1985averaged" >}}, we consider $m$ histograms all with a respective origin shifted by $1/m$-th of the standard bin size $h$, or in other words the origin of the $j$-th histogram with $0 \leq j \leq m - 1$ is $t_0^{(j)} = t_0 + j\frac{h}{m}$.
 
-In other word, the $j$-th histogram $\hat f^{(j)}$ - that is shifted by $jh/m$ with respect to the initial origin $t_0$ - is computed over the bins $B_k^{(j)} = \left[ t_0 + j\frac{h}{m} + kh, t_0 + j\frac{h}{m} + (k+1)h \right)$.
+In other words, the $j$-th histogram $\hat f^{(j)}$ - that is shifted by $jh/m$ with respect to the initial origin $t_0$ - is computed over the bins $B_k^{(j)} = \left[ t_0 + j\frac{h}{m} + kh, t_0 + j\frac{h}{m} + (k+1)h \right)$.
 This yields the following definition:
 
 $$
@@ -98,7 +98,7 @@ $$
 
 ## Kernel implementation
 
-The previous equation can be simplified by subdivding $\R$ with smaller bins $b_k$ of size $h/m$: $b_k = \left[ t_0 + kh/m, t_0 + (k+1)h/m \right)$. 
+The previous equation can be simplified by subdividing $\R$ with smaller bins $b_k$ of size $h/m$: $b_k = \left[ t_0 + kh/m, t_0 + (k+1)h/m \right)$. 
 With this new subdivision, one may notice that each $B_k^{(j)}$ can be decomposed as a union of those atomic bins:
 
 $$
@@ -139,7 +139,7 @@ $$
 $$
 
 Say our target is a distance of 0; then we can visually read that there are exactly $m$ combinations of $p$ and $q$ that yield this null distance: they are the elements of the main diagonal. 
-If we are looking for a target distance of $-1$, then they are $m-1$ combinations: those are the values on the lower sub-diagonal. 
+If we are looking for a target distance of $-1$, then there are $m-1$ combinations: those are the values on the lower sub-diagonal. 
 
 Following this reasoning, you can convince yourself that the number of interactions between two bins separated by a distance of $p-q$ is exactly:
 $$ C_{p-q} = \left( m - |p-q| \right)_+.$$
@@ -163,7 +163,7 @@ It should be noted that the previous derivations are not rigorous enough to be a
 Another - maybe more intuitive - way to understand this phenomenon is to realize that **ASH effectively convolves two rectangular functions** (also called [boxcar filters](https://en.wikipedia.org/wiki/Rectangular_function)), which naturally **yields a triangular kernel**.
 
 All this theory yields a highly efficient implementation for ASH: instead of managing $m$ histograms concurrently, one can store a single high-resolution histogram of bin size $h/m$, and at the last moment convolve it with a triangular kernel of size $2m−1$.
-Thus, ASH has a $\mathcal O(N)$ coputational complexity — similar to a simple histogram — but has a higher cost of $O(mN)$ in memory.
+Thus, ASH has a $\mathcal O(N)$ computational complexity — similar to a simple histogram — but has a higher cost of $O(mN)$ in memory.
 
 In practice, while the triangular kernel is the exact mathematical tool, it tends to produce noisy results. It is common practice to substitute it for a smoother kernel, for instance, the triweight kernel, as recommended by {{< citep "scott2010averaged" >}}:
 
@@ -171,7 +171,7 @@ $$
 K_d = \frac{35}{32}\left(1-\left(\frac{d}{m}\right)^2\right)_+^3
 $$
 
-Of course, any other kernel can be used; see the [Wikipedia list of regulary used kernels](https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use) for other ideas.
+Of course, any other kernel can be used; see the [Wikipedia list of regularly used kernels](https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use) for other ideas.
 
 
 ## Relation with kernel density estimation (KDE)
@@ -186,16 +186,16 @@ This yields a fast, high-quality approximation of KDE that scales well with both
 ## Generalization to higher dimensions
 ASH generalizes trivially to multiple dimensions, but unfortunately it scales poorly with the number of dimensions.
 
-In dimension $n$, given an original bin size of $h^n$, one can compute an histogram with bin size $(h/m)^n$ and then perform the convolution over the high dimension grid.
-This effectively averages $m^n$ shifted histogram.
+In dimension $n$, given an original bin size of $h^n$, one can compute a histogram with bin size $(h/m)^n$ and then perform the convolution over the high dimension grid.
+This effectively averages $m^n$ shifted histograms.
 Given the exponential scaling of the memory requirement with respect to $n$, 
-I would not recommend ASH to handle high-dimensional data.
+I would not recommend ASH with high-dimensional data.
 
 ## Application to SMLM
 I originally discovered ASH as an efficient visualization tool used in Single Molecule Localization Microscopy (SMLM). It allows one to efficiently render 2D images of biological structures using the localized coordinates. Applying this method to SMLM was first introduced by {{< citet "ovesny2016computational" >}}.
 
 An example implementation can be found in my GitHub repository. 
-Here is it at the time of writting:
+Here it is at the time of writing:
 
 ```python
 import torch
