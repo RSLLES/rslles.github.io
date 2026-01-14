@@ -22,26 +22,30 @@ bib:
     year: 1981
     journal: "Zeitschrift für Wahrscheinlichkeitstheorie und Verwandte Gebiete"
     url: "https://bayes.wustl.edu/Manual/FreedmanDiaconis1_1981.pdf"
+  - id: "ovesny2016computational"
+    title: "Computational methods in single molecule localization microscopy"
+    author: "Ovesny, Martin"
+    year: 2016
+    journal: "Univerzita Karlova, 1. lekarska fakulta"
+    url: "https://dspace.cuni.cz/bitstream/handle/20.500.11956/2117/IPTX_2013_1_11110_0_406481_0_147751.pdf?sequence=1"
 ---
 
 The histogram is without doubt the oldest and most widely used nonparametric density estimation tool - probably thanks to its interpretability and efficient implementation.
-For 1D data, it is formed by dividing $\R$ into equal sized intervals called *bins*, counting the number of points falling into each bin, and reporting the result with a piecewise constant function.
+For 1D data, it is formed by first dividing $\R$ into equal sized intervals called *bins*, then counting the number of points falling into each bin, and ultimately reporting the result through a piecewise constant function.
 
-Formaly, given a fixed bin width $h > 0$, let $B_k = [t_k, t_{k+1})$ be the k-th interval, with $h = t_{k+1} - t_k$.
+Formaly, given a fixed bin width $h > 0$ and an origin $t_0$, let $B_k^{(0)} = [t_0 + kh, t_0 + (k+1)h)$ be the k-th interval.
 Given $N$ random samples $\{ x_1, \dots, x_N \}$, 
-we denote by $\nu_k$ be the number of point belonging to bin $B_k$:
+we denote by $\nu: \mathcal P(\R) \to \N$ the normalized counting operator of our dataset, that returns the ratio of points belonging to a given subset of $\R$:
 
-$$ \nu_k = \sum_{i=1}^N I(x_i \in B_k) $$
+$$ \nu (E) = \frac{1}{N} \sum_{i=1}^N I(x_i \in E) $$
 
-The histogram is then the resulting step-wise function:
-$$\hat f(x) = \frac{1}{Nh} \sum_{k} \nu_k I(x \in B_k) = 
-\begin{cases}
-\frac{1}{Nh}\nu_k & \text{if } x \in B_k \\
-0 & \text{otherwise.}
-\end{cases}
+We define the histogram as the following step-wise function:
+$$\hat f(x) = \frac{1}{h} \sum_{k} I(x \in B_k^{(0)}) \nu (B_k^{(0)}) =
+\frac{1}{h} \nu (B_k^{(0)}) 
+\; \text{where} \; k \; \text{is such that} \; x \in B_k^{(0)}
 $$
 
-Clearly, $\sum_k \nu_k = N$ and $\int {\hat f} = 1$. 
+Clearly, $\sum_k \nu (B_k^{(0)}) = 1$ and $\int {\hat f} = 1$. 
 
 The naive histogram implementation computation is extremely efficient: 
 for a given value $x_i$, one can compute the corresponding index, $p = \lfloor \frac{x_i}{h} \rfloor$, and increment a pre-allocated array at the corresponding index, `array[p] += 1`. 
@@ -59,7 +63,7 @@ As one may see, they look very different from each other, highlingting the impac
 Furthemore, as shown by {{< citet "freedman1981histogram" >}}, assuming one kowns the sampling density $f$ (which we don't in practice), the "optimal" bin width formula in some sens is: 
 
 $$
-h^* = \left[ \frac{6}{n\int f'(x)^2 dx} \right]^{1/3}
+h^* = \left[ \frac{6}{N\int f'(x)^2 dx} \right]^{1/3}
 $$
 
 One may notice than $t_0$ is not part of this formula; therefore, it makes sens to treat $t_0$ as a nuisance parameter, that should not have such an important impact on the end-result.
@@ -68,48 +72,285 @@ One may notice than $t_0$ is not part of this formula; therefore, it makes sens 
 
 To minimize the impact of $t_0$ on the end results, {{< citet "scott1985averaged" >}} have proposed a new method called **average shifted histogram** (ASH).
 
-The core idea is simple: given a bin size $h$ and an integer $n$, compute $m$ histograms all with bin size $h$ but with a respective shifted origin $t_0^{(j)} = t_0 + jh/m$ for $j$ in $\{0, \dots, m-1\}$.
-All those histograms are then averaged together, yielding a new histogram with bin size $h/m$.
-The result is a smoother histogram, as depicted in the next figure ({{< citep "scott2010averaged" >}}) with for different value for $m$:
+The core idea is simple: given a bin size $h$ and an integer $n$, compute $m$ histograms all with the same bin size $h$ but with **shifted origins**, and
+**average them all together** to yield a new histogram.
+The result is a smoother histogram with bin size $h/m$, as depicted in the next figure ({{< citep "scott2010averaged" >}}) for different values of $m$:
 
 ![Figure 2](./ash_triangle.png)
 
-Let's frame this with mathematical terms.
-To simplify the notation, we are goin to assume (without loss of generality) that $t_0=0$ and we only focus on the first large bin $B_0$.
 
-Say we want to compute the ASH for $m$ histgrams.
-Let $\delta = h/m$ be the atomique shift that will be added to each histogram.
-The first histogram will be computed with a first bin $B_0^{(0)}$ = 
+Let's frame this mathematicaly.
+Following {{< citet "scott1985averaged" >}}, we consider $m$ histograms all with a respective origin shifted by $1/m$-th of the standard bin size $h$, or in other word the origin of the $j$-th histogram with $0 \leq j \leq m - 1$ is $t_0^{(j)} = t_0 + j\frac{h}{m}$.
 
-We are going to split the previous bin $B_k = [kh, (k+1)h)$ into $m$ smaller bins $b_k^{(0)}, \dots, b_k^{(m-1)}$ of size $h/m$, i.e. $b_k^{(p)} = [(km + p)h/m, (km + p + 1)h/m)$.
-meaning by construction, $B_k = \bigcup_{p=0}^{m-1} b_k^{(p)}$.
+In other word, the $j$-th histogram $\hat f^{(j)}$ - that is shifted by $jh/m$ with respect to the initial origin $t_0$ - is computed over the bins $B_k^{(j)} = \left[ t_0 + j\frac{h}{m} + kh, t_0 + j\frac{h}{m} + (k+1)h \right)$.
+This yields the following definition:
 
-The default basic histogram uses the bins $B_k$.
-As the origin shift is 
+$$
+\hat f^{(j)}(x) = \frac{1}{h} \sum_{k} I(x \in B_k^{(j)}) \nu (B_k^{(j)})
+$$
+
+And the resulting ASH is:
+
+$$
+\hat f(x) = \frac{1}{m} \sum_{j=0}^{m-1} \hat f^{(j)}(x) = \frac{1}{mh} \sum_{j=0}^{m-1} \sum_{k} I(x \in B_k^{(j)}) \nu (B_k^{(j)})
+$$
+
 
 ## Kernel implementation
-Swapping sums in Equation yields a new equivalent formulation for this problem: 
 
-So instead of managing $d$ histograms concurrently, one can store a high resolution histogram of bin size $h/d$, and at the last moment apply the following weights:
+The previous equation can be simplified by subdivding $\R$ with smaller bins $b_k$ of size $h/m$: $b_k = \left[ t_0 + kh/m, t_0 + (k+1)h/m \right)$. 
+With this new subdivision, one may notice that each $B_k^{(j)}$ can be decomposed as a union of those atomic bins:
 
-This is equivalent to convolution with a triangular kernel of size $2m + 1$  as the complexity of computing an histogram does not depend of the bin size, fitting it with $N$ values can be done in $\mathcal O(N$) for an identical memory cost that ASH. To produce a smoother images, a common approach is to change this kernel for smoother alternative, for instance the triweight kernel:
+$$
+B_k^{(j)} = \bigcup_{p=0}^{m -1} b_{km+j+p}
+.
+$$
+
+As the $b_p$ are a partition of $\R$, we have $I(x \in B_k^{(j)}) = \sum_{p=0}^{m-1} I(x \in b_{km+j+p})$, from which we can derive $\nu (B_k^{(j)}) = \sum_{p=0}^{m-1} \nu \left( b_{km+j+p} \right)$. 
+Finally, injecting this definition into $\hat f$ yields:
+
+$$
+\hat f(x) = \frac{1}{mh} \sum_{k} \sum_{j=0}^{m-1} \sum_{p=0}^{m-1} \sum_{q=0}^{m-1} I(x \in b_{km+j+q}) \nu \left( b_{km+j+p} \right)
+$$
+
+Well, I agree that it does not look simplified at all.
+To simplify this, let's pause a minute and consider the different roles of the terms of this sum.
+After careful inspection, **the previous expression of $\hat f(x)$ is only a weighted sum of the count values of other bins, with a coefficient that depends on the anchor bin containing $x$** ($b_{km+j+q}$ in the equation) ** and the considered bin whose value interests us ** ($b_{km+j+p}$ in the equation). 
+If we can find the number of times the count value $\nu \left( b_s \right)$ of a specific bin $b_s$ interacts when $x$ belongs to another anchor bin $b_r$, if we denote this number $C_{s,r}$, then we could re-write this equation in the form:
+
+$$
+\hat f(x) = \frac{1}{mh} \sum_{r} \sum_{s} I(x \in b_{r}) C_{r,s} \nu \left( b_{s} \right)
+$$
+
+Therefore, let's consider the following question: 
+**how many times does a specific bin $b_{s}$ (with an associated count $\nu \left( b_{s} \right)$) - interact with the bin containing $x$, that is $b_{r}$ ?**
+
+Let $D$ be the index-distance between those two bins.
+We have that $D = s-r=km+j+p - (km+j+q) = p - q$. Both local sum indices $p$ and $q$ range from $0$ to $m-1$, taking $m$ different values: if we compute the matrix of differences $p-q$ for all possible pairs, we get:
+
+$$
+\begin{pmatrix}
+0 & 1 & 2 & \dots & m-1 \\
+-1 & 0 & 1 & \dots & m-2 \\
+-2 & -1 & 0 & \dots & m-3 \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+-m+1 & -m+2 & -m+3 & \dots & 0
+\end{pmatrix}
+$$
+
+Say our target is a distance of 0; then we can visually read that there are exactly $m$ combinations of $p$ and $q$ that yield this null distance: they are the elements of the main diagonal. 
+If we are looking for a target distance of $-1$, then they are $m-1$ combinations: those are the values on the lower sub-diagonal. 
+
+Following this reasoning, you can convince yourself that the number of interactions between two bins separated by a distance of $p-q$ is exactly:
+$$ C_{p-q} = \left( m - |p-q| \right)_+.$$
+
+Plugging this into our previous equation yields the following form for  
+
+$$
+\hat f(x) = \frac{1}{mh} \sum_{r} \sum_{d} I(x \in b_{r}) C_d \nu \left( b_{k+s} \right)
+$$
+
+Ultimately, those derivations lead us to the definition of a new piecewise constant function defined on the atomic bins $b_k$, but **in contrast to a classic histogram, the value associated to each bin is computed by applying a triangular convolution kernel** over the raw counts:
+
+$$
+\hat f(x) = \frac{1}{h} \sum_{k} I(x \in b_{k}) \sum_{d=-m+1}^{m+1}K_d \nu \left( b_{d} \right)
+\quad \text{where} \quad
+K_d = \left( 1 - \frac{|d|}{m} \right)_+
+$$
+
+It should be noted that the previous derivations are not rigorous enough to be a proper demonstration: playing with intricated sums can quickly get technical, and we redirect the reader to {{< citet "scott1985averaged" >}} for detailed proofs.
+
+Another - maybe more intuitive - way to understand this phenomenon is to realize that **ASH effectively convolves two rectangular functions** (also called [boxcar filters](https://en.wikipedia.org/wiki/Rectangular_function)), which naturally **yields a triangular kernel**.
+
+All this theory yields a highly efficient implementation for ASH: instead of managing $m$ histograms concurrently, one can store a single high-resolution histogram of bin size $h/m$, and at the last moment convolve it with a triangular kernel of size $2m−1$.
+Thus, ASH has a $\mathcal O(N)$ coputational complexity — similar to a simple histogram — but has a higher cost of $O(mN)$ in memory.
+
+In practice, while the triangular kernel is the exact mathematical tool, it tends to produce noisy results. It is common practice to substitute it for a smoother kernel, for instance, the triweight kernel, as recommended by {{< citep "scott2010averaged" >}}:
+
+$$
+K_d = \frac{35}{32}\left(1-\left(\frac{d}{m}\right)^2\right)_+^3
+$$
+
+Of course, any other kernel can be used; see the [Wikipedia list of regulary used kernels](https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use) for other ideas.
+
 
 ## Relation with kernel density estimation (KDE)
 
-When $d \rightarrow \infty$, ASH effectively becomes equivalent to KDE with the before-mentioned kernel. Scott's notice that results becomes almost indistinguishable from KDE for $d \sim 7$, yielding a faster approximation for those methods.
+As the number of shifts $m$ grows, the ASH estimator effectively converges to a standard KDE with a triangular kernel ({{< citep "scott1985averaged" >}}).
+
+In practice, {{< citet "scott1985averaged" >}} noted that the efficiency of the ASH becomes almost indistinguishable from the exact KDE for $m \geq 5$. 
+At the same time, ASH provides a massive computational advantage compared to KDE : 
+rather than evaluating the kernel function against every data point for every pixel, ASH aggregates the data once and smooths the bins directly. 
+This yields a fast, high-quality approximation of KDE that scales well with both the number of points and the number of bins.
 
 ## Generalization to higher dimensions
-ASH generalize trivially to multiple dimensions 
+ASH generalizes trivially to multiple dimensions, but unfortunately it scales poorly with the number of dimensions.
+
+In dimension $n$, given an original bin size of $h^n$, one can compute an histogram with bin size $(h/m)^n$ and then perform the convolution over the high dimension grid.
+This effectively averages $m^n$ shifted histogram.
+Given the exponential scaling of the memory requirement with respect to $n$, 
+I would not recommend ASH to handle high-dimensional data.
 
 ## Application to SMLM
-I dove into ASH theory as part of my PhD thesis about Single molecule localization microscopy, where ASH is commonly use to efficiently render 2D images of structure. It was first introduced by
+I originally discovered ASH as an efficient visualization tool used in Single Molecule Localization Microscopy (SMLM). It allows one to efficiently render 2D images of biological structures using the localized coordinates. Applying this method to SMLM was first introduced by {{< citet "ovesny2016computational" >}}.
 
-A little modification 
+An example implementation can be found in my GitHub repository. 
+Here is it at the time of writting:
 
-Implementation can be found in my github repository; at the time of writting, here is the current version
+```python
+import torch
+from torch import Tensor
+from torch.nn.functional import conv2d
+from torchmetrics import Metric
+
+from smlmshot import utils
 
 
-https://www.researchgate.net/profile/David-Scott-57/publication/229760716_Averaged_Shifted_Histogram/links/5be5923b4585150b2ba96e38/Averaged-Shifted-Histogram.pdf?origin=publication_detail&_tp=eyJjb250ZXh0Ijp7ImZpcnN0UGFnZSI6InB1YmxpY2F0aW9uRG93bmxvYWQiLCJwYWdlIjoicHVibGljYXRpb25Eb3dubG9hZCIsInByZXZpb3VzUGFnZSI6InB1YmxpY2F0aW9uIn19
+class AverageShiftedHistogram(Metric):
+    """Render 2D visualizations of SMLM data by the average shifted histogram method."""
 
-Section 3.8.1 https://dspace.cuni.cz/bitstream/handle/20.500.11956/2117/IPTX_2013_1_11110_0_406481_0_147751.pdf?sequence=1
+    full_state_update: bool = True
 
+    def __init__(
+        self,
+        x0: float,
+        y0: float,
+        x1: float,
+        y1: float,
+        img_size: int | tuple[int, int],
+        n_shifts: int = 2,
+        kernel: str = "triweight",
+        export_as_figure: bool = True,
+    ):
+        """Initialize the Average Shifted Histogram with physical coordinates.
+
+        - x0, y0: The origin coordinates (top-left)
+        - x1, y1: The end coordinates (bottom-right)
+        - img_size: The desired output resolution (H, W)
+        - smooth_factor: Determines the number of shifts.
+        """
+        super().__init__()
+        self.register_buffer("origin", torch.tensor([x0, y0], dtype=torch.float32))
+        self.H, self.W = utils.torch.to_pair(img_size)
+        self.n_shifts = n_shifts
+        kernel = utils.format.format_string(kernel)
+        self.register_buffer("kernel", self.compute_kernel(kernel))
+        self.export_as_figure = export_as_figure
+
+        self.register_buffer(
+            "bin_size", torch.tensor([abs(y1 - y0) / self.H, abs(x1 - x0) / self.W])
+        )
+        hist = torch.zeros((1, 1, self.H, self.W), dtype=torch.float)
+        self.add_state("hist", default=hist, dist_reduce_fx="sum")
+
+    @classmethod
+    def from_magnification(
+        cls,
+        img_size: int | tuple[int, int],
+        pixel_size: float | tuple[float] | Tensor,
+        magnification: int = 2,
+        sharpening_factor: float = 1.0,
+        kernel: str = "triweight",
+        export_as_figure: bool = True,
+    ):
+        """Initialize the Average Shifted Histogram.
+
+        - img_size: the original image size
+        - pixel_size: the original pixel size
+        - magnification: controls the output image, that will be H * magn, W * magn
+        - sharpening_factor: controls the resolvable distance of the output image.
+        Resolvable distance will be pixel_size/sharpening_factor. Note that
+        sharpening_factor must be <= than magnification.
+        """
+        if sharpening_factor > magnification:
+            raise ValueError("sharpening_factor must be <= than magnification.")
+
+        H_orig, W_orig = utils.torch.to_pair(img_size)
+        pixel_size = utils.torch.to_pair(pixel_size)
+        pixel_size = torch.as_tensor(pixel_size)
+
+        H, W = H_orig * magnification, W_orig * magnification
+        x0, y0 = 0.0, 0.0
+        x1, y1 = W_orig * pixel_size[0], H_orig * pixel_size[1]
+        n_shifts = int(round(magnification / sharpening_factor))
+        return cls(
+            x0=x0,
+            y0=y0,
+            x1=x1,
+            y1=y1,
+            img_size=(H, W),
+            n_shifts=n_shifts,
+            kernel=kernel,
+            export_as_figure=export_as_figure,
+        )
+
+    @staticmethod
+    def get_kernel(name: str):
+        """Map kernel names to their implementation."""
+        if name == "triangular":
+            return lambda u: (1.0 - u.abs()).clip(min=0.0)
+        if name == "triweight":
+            return lambda u: (1.0 - u.square()).pow(3).clip(min=0.0)
+        raise ValueError(
+            f"Supported kernels are triangular and triweight, found {name}."
+        )
+
+    def compute_kernel(self, name: str):
+        """Return the 2D convolution kernel needed to smooth the HD histogram."""
+        kernel_func = self.get_kernel(name)
+        u = torch.linspace(-1.0, 1.0, steps=2 * self.n_shifts + 1, device=self.device)
+        kernel_1d = kernel_func(u[1:-1])  # edges are always 0
+        kernel_2d = torch.outer(kernel_1d, kernel_1d)
+        kernel_2d = kernel_2d / kernel_2d.sum()
+        return kernel_2d[None, None]  # pad for conv2d
+
+    def get_output_img_size(self) -> [int, int]:
+        """Return the output image size."""
+        return self.H, self.W
+
+    def get_output_pixel_size(self) -> Tensor:
+        """Return the output image size."""
+        return self.bin_size
+
+    def update(self, xy: Tensor | list[Tensor]):
+        """Update the high resolution histogram with the new values.
+
+        Fastest implementation on GPU seems to rely on torch.bincount.
+        """
+        if isinstance(xy, list):
+            xy = [e[..., :2] for e in xy]
+            xy = torch.cat(xy, dim=0)
+        xy = xy[..., :2].reshape(-1, 2)  # (N, 2), flatten potential batch size
+        xy = xy.to(self.device)
+
+        xy = xy - self.origin
+        xy = xy[:, None]
+        xy = xy / self.bin_size
+        indices = xy.floor().long()
+
+        mask = (
+            (indices[..., 0] >= 0)
+            & (indices[..., 0] < self.W)
+            & (indices[..., 1] >= 0)
+            & (indices[..., 1] < self.H)
+        )
+        indices = indices[mask]
+        indices = indices[:, 1] * self.W + indices[:, 0]
+
+        counts = torch.bincount(indices, minlength=self.hist.numel())
+        self.hist += counts.view(*self.hist.shape).float()
+
+    def compute(self):
+        """Compute the ASH by convolving with a kernel the HR histogram."""
+        ash = conv2d(self.hist, self.kernel, padding="same")[0, 0]
+        if not self.export_as_figure:
+            return ash
+
+        img_extent = utils.extent.get_img_extent(
+            h=self.H, w=self.W, pixel_size=self.bin_size
+        )
+        utils.plot.clf()
+        utils.plot.imshow(ash, img_extent=img_extent)
+        return utils.plot.plt.gcf()
+
+```
