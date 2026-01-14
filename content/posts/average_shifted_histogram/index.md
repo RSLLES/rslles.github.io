@@ -115,7 +115,7 @@ $$
 
 Well, I agree that it does not look simplified at all.
 To simplify this, let's pause a minute and consider the different roles of the terms of this sum.
-After careful inspection, **the previous expression of $\hat f(x)$ is only a weighted sum of the count values of other bins, with a coefficient that depends on the anchor bin containing $x$** ($b_{km+j+q}$ in the equation) ** and the considered bin whose value interests us ** ($b_{km+j+p}$ in the equation). 
+After careful inspection, **the previous expression of $\hat f(x)$ is only a weighted sum of the count values of other bins, with a coefficient that depends on the anchor bin containing $x$** ($b_{km+j+q}$ in the equation) **and the considered bin whose value interests us** ($b_{km+j+p}$ in the equation). 
 If we can find the number of times the count value $\nu \left( b_s \right)$ of a specific bin $b_s$ interacts when $x$ belongs to another anchor bin $b_r$, if we denote this number $C_{s,r}$, then we could re-write this equation in the form:
 
 $$
@@ -123,10 +123,11 @@ $$
 $$
 
 Therefore, let's consider the following question: 
-**how many times does a specific bin $b_{s}$ (with an associated count $\nu \left( b_{s} \right)$) - interact with the bin containing $x$, that is $b_{r}$ ?**
+**how many times does a specific neighbor bin $b_{s}$ (whose count value $\nu \left( b_{s} \right)$ is of interest) interact with another the anchor bin $b_{r}$ containing $x$ ?**
 
 Let $D$ be the index-distance between those two bins.
-We have that $D = s-r=km+j+p - (km+j+q) = p - q$. Both local sum indices $p$ and $q$ range from $0$ to $m-1$, taking $m$ different values: if we compute the matrix of differences $p-q$ for all possible pairs, we get:
+We have that $D = s-r=km+j+p - (km+j+q) = p - q$. 
+Both local sum indices $p$ and $q$ range from $0$ to $m-1$, taking $m$ different values: if we compute the matrix of differences $p-q$ for all possible pairs, we get:
 
 $$
 \begin{pmatrix}
@@ -192,7 +193,7 @@ Given the exponential scaling of the memory requirement with respect to $n$,
 I would not recommend ASH with high-dimensional data.
 
 ## Application to SMLM
-I originally discovered ASH as an efficient visualization tool used in Single Molecule Localization Microscopy (SMLM). It allows one to efficiently render 2D images of biological structures using the localized coordinates. Applying this method to SMLM was first introduced by {{< citet "ovesny2016computational" >}}.
+I originally discovered ASH as an efficient visualization tool used in Single Molecule Localization Microscopy (SMLM). It allows one to efficiently render 2D images of biological structures using the localized coordinates. Applying this method to visualize SMLM data was first introduced by {{< citet "ovesny2016computational" >}}.
 
 An example implementation can be found in my GitHub repository. 
 Here it is at the time of writing:
