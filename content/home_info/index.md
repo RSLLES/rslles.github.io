@@ -9,6 +9,6 @@ I am graduated from [Mines de Paris](https://en.wikipedia.org/wiki/Mines_Paris_%
 
 Curious by nature, I am intrigued by almost everything that adopts a scientific approach: 
 at the forefront are mathematics, machine learning, computer vision, and software engineering - which compose my daily work - yet I am also drawn to more distant subjects such as energy, sociology, geopolitics, and philosophy. 
-I try to distill (almost) every week my explorations into short blog posts, hoping they will inspire you to (re)discover interesting domains.  
+I try to distill my explorations into short blog posts, hoping they will inspire you to (re)discover interesting domains.  
 
-Off-screen, I am a triathlete on sunny days, a climber & hiker when the air is crisp and cool, and a skier and board-game enthusiast during winter.
+Off-screen, I’m a triathlete when it’s sunny, a climber and hiker when it’s mild, and a skier and board-gamer when it’s cold.
