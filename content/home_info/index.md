@@ -11,4 +11,4 @@ Curious by nature, I am intrigued by almost everything that adopts a scientific 
 at the forefront are mathematics, machine learning, computer vision, and software engineering - which compose my daily work - yet I am also drawn to more distant subjects such as energy, sociology, geopolitics, and philosophy. 
 I try to distill my explorations into short blog posts, hoping they will inspire you to (re)discover interesting domains.  
 
-Off-screen, I’m a triathlete when it’s sunny, a climber and hiker when it’s mild, and a skier and board-gamer when it’s cold.
+Off-screen, I’m a triathlete when it’s sunny, a climber and hiker when it’s mild, and a skiing and board-game enthusiast when it’s cold.
