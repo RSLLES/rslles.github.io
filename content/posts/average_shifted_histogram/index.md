@@ -2,7 +2,6 @@
 title: "Average shifted histogram"
 date: 2026-01-14
 draft: false
-ShowBreadCrumbs: true
 bib:
   - id: "scott1985averaged"
     title: "Averaged Shifted Histograms: Effective Nonparametric Density Estimators in Several Dimensions"

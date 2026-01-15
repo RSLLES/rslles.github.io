@@ -27,6 +27,8 @@ params:
     appendFilePath: true
   ShowCodeCopyButtons: true
   comments: true # comments are hijacked for bibliography
+  ShowToc: true
+  ShowBreadCrumbs: true
 
 # main menu
 menu:
