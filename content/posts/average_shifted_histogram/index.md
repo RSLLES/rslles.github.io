@@ -122,7 +122,7 @@ $$
 $$
 
 Therefore, let's consider the following question: 
-**how many times does a specific neighbor bin $b_{s}$ (whose count value $\nu \left( b_{s} \right)$ is of interest) interact with another the anchor bin $b_{r}$ containing $x$ ?**
+**how many times does a specific neighbor bin $b_{s}$ (whose count value $\nu \left( b_{s} \right)$ is of interest) interact with a specific anchor bin $b_{r}$ containing $x$ ?**
 
 Let $D$ be the index-distance between those two bins.
 We have that $D = s-r=km+j+p - (km+j+q) = p - q$. 
