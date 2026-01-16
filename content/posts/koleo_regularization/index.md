@@ -70,16 +70,16 @@ $$-\log N -\log p(x_1) \simeq \log(A) + 2\log R_1$$
 
 $$-\log p(x_1) \simeq \log(AN) + 2\log R_1$$
 
-We have sucessfuly isolated $-\log p(x_1)$, that is the core element of computing the differential entropy $\H(p) = \E [ -\log p ]$ !
+We have sucessfuly isolated $-\log p(x_1)$, that is the core element of computing the differential entropy $h(p) = \E [ -\log p ]$ !
 Instead of focusing solely on you, we can also use all the others personn in the room, and approximate this term by it's emperical expectation.
-Remember that by definition, $R_1$ was the distance to your closest neighbour, thus in more general therm we have $R_i = \argmin_{j \neq i} || x_i - x_j ||_2 $.
+Remember that by definition, $R_1$ was the distance to your closest neighbour, thus in more general therm we have $R_i = \min_{j \neq i} || x_i - x_j ||_2 $.
 This yiels this final result:
 
-$$\H(p) \simeq \frac{-1}{N}\sum_{i=1}^N \log p(x_i) \simeq 2 \sum_{i=1}^N \log \left( \argmin_{j \neq i} || x_i - x_j ||_2\right) + \log N + \log A $$
+$$h(p) \simeq \frac{-1}{N}\sum_{i=1}^N \log p(x_i) \simeq 2 \sum_{i=1}^N \log \min_{j \neq i} || x_i - x_j ||_2 + \log N + \log A $$
 
 The KoLeo regularization directly derives from this; they added a minus sign, as we like to think of regularizxation as term we would like to minimize, but here it corresponds to maximize the entropy to spread things out, and they remove the constants $A$ and $N$ (the latter is usually constant, as it is fixed by the batch size), yielding:
 
-$$\sR_\text{KoLeo} = -\sum_{i=1}^N \log \left( \argmin_{j \neq i} || x_i - x_j ||_2\right).$$
+$$\gR_\text{KoLeo} = -\sum_{i=1}^N \log \min_{j \neq i} || x_i - x_j ||_2 .$$
 
 ## A bit more formal
 pass
