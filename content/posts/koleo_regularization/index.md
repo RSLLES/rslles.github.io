@@ -64,20 +64,24 @@ Note that the embeddings need to belong to a bounded support, otherwise the regu
 
 But where does this formula come from?
 The KoLeo regularizer is derived from the *Kozachenko–Leonenko differential entropy estimator* ({{< citep "kozachenko1987sample" >}}).
-Back in your physics or information classes, you may have seen that the entropy is, for a discrete distribution,
-a measure of its information content, that is maximized for the uniform distribution.
-For continuous variables, the analogue is the differential entropy, that is defined as.
-While it does not retain all the convenient properties of its original, it enjoys
-one that is of interest to us: on a bounded fixed support, the differential entropy is maximized by the uniform distribution.
+Back in your physics or information classes, you may have seen that the entropy of a discrete distribution is
+a measure of its information content.
+Overall possible distributions, entropy is maximized by the uniform distribution.
+For continuous variables, entropy analogue is the differential entropy, that is defined for $X \sim f$ as:
 
-The connection between the differential entropy and our initial problematic is thus immediate: to nicely spread embeddings - i.e. getting close to a uniform distribution in the latent space - an alternative option is to **maximize the entropy of the distribution of the embeddings**.
+$$ h(X) = \E \left[ - \log f(X) \right] = -\int_\sX f(x) \log f(x)dx.$$ 
 
-And it turns out that the Kozachenko–Leonenko differential entropy estimator, as its name suggests, is precisely an estimator of the differential entropy of a distribution given only samples from it.
-Given samples $\vx_0, \dots, \vx_N \in \R^d$ i.i.d from a distribution $\rho$ with finite support, the Kozachenko–Leonenko estimator writes:
+While it does not retain all the convenient properties of its original counterpart (it is not always positive, it is not dimensionless), 
+it does conserve one that is of interest to us: **given a bounded support, among all the densities on this support, the differential entropy is maximized by the uniform distribution.**
 
-$$ H_N = \frac{d}{N+1} \sum_{i=0}^N {\log \min_{j \neq i} || \vx_i - \vx_j ||} + \log N + \gamma + \log V_1$$
+The connection with our initial problematic is thus immediate: to spread embeddings accross the latent space - i.e. getting close to a uniform distribution - an option is to **maximize the differential entropy of the embedding distribution**.
 
-where $V_1$ is the volume of the unit-ball $V_1 = \int_{\sB(0, 1)}$ and $\gamma$ is [Euler's constant](https://en.wikipedia.org/wiki/Euler's_constant).
+And it turns out that the Kozachenko–Leonenko differential entropy estimator - as its name suggests - is precisely an estimator of the differential entropy of a distribution given only samples from it.
+Given samples $\vx_0, \dots, \vx_N \in \R^d$ i.i.d from a distribution $\rho$ over a finite support, the Kozachenko–Leonenko estimator writes:
+
+$$ H_N = \frac{d}{N+1} \sum_{i=0}^N {\log \min_{j \neq i} || \vx_i - \vx_j ||} + \log N + \gamma + \log V_1,$$
+
+where $V_1 = \int_{\sB(0, 1)}$ is the volume of the unit-ball and $\gamma$ is [Euler's constant](https://en.wikipedia.org/wiki/Euler's_constant).
 Assuming that $N$ (i.e. the batch size) and $d$ (the embedding dimension) are constants in a deep learning framework,
 we see that maximizing $H_N$ is equivalent to maximizing $\mathcal{L}_\text{KoLeo}$ (which are, with those considerations, equal up to a negative scale and an offset).
 
