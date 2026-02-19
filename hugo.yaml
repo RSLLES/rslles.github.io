@@ -39,7 +39,7 @@ menu:
       weight: 1
 
     - identifier: publications
-      name: Publications
+      name: "Papers & Talks"
       url: /publications/
       weight: 2
 
