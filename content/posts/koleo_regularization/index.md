@@ -67,9 +67,9 @@ The KoLeo regularizer is derived from the *Kozachenko–Leonenko differential en
 Back in your physics or information classes, you may have seen that the entropy of a discrete distribution is
 a measure of its information content, and among all distributions, it is the uniform distribution that achieves maximal entropy. 
 Shannon attempt to extend the definition of entropy to continuous variables yielded the **differential entropy**, that is just the regular entropy with the sum swapped for an integral.
-Given $X \sim f$, it writes:
+Given $\rvx \sim f$, it writes:
 
-$$ h(X) = \E \left[ - \log f(X) \right] = -\int_\sX f(\vx) \log f(\vx)d\vx.$$ 
+$$ h(\rvx) = \E \left[ - \log f(\rvx) \right] = -\int_\sX f(\vx) \log f(\vx)d\vx.$$ 
 
 While differential entropy does not retain all the convenient properties of its original counterpart (it is not always positive, it is not dimensionless), 
 it does conserve one that is of interest to us: **for a fixed support $S$, then among all densities on $S$, the uniform distribution maximized the differential entropy.**
@@ -79,7 +79,7 @@ The connection with our initial problematic is immediate: to spread embeddings a
 And it turns out that the Kozachenko–Leonenko differential entropy estimator - as its name suggests - is precisely an estimator of the differential entropy of a distribution given only samples from it.
 Given samples $\vx_0, \dots, \vx_N \in \R^d$ i.i.d from a distribution $\rho$ over a finite support, the Kozachenko–Leonenko estimator writes:
 
-$$ H_N = \frac{d}{N+1} \sum_{i=0}^N {\log \min_{j \neq i} || \vx_i - \vx_j ||} + \log N + \gamma + \log V_1,$$
+$$ h(\rvx) \underset{N \to \infty}{\simeq} \frac{d}{N+1} \sum_{i=0}^N {\log \min_{j \neq i} || \vx_i - \vx_j ||} + \log N + \gamma + \log V_1,$$
 
 where $V_1 = \int_{\sB(0, 1)}$ is the volume of the unit-ball and $\gamma$ is [Euler's constant](https://en.wikipedia.org/wiki/Euler's_constant).
 Assuming that $N$ (i.e. the batch size) and $d$ (the embedding dimension) are constants in a deep learning framework,
@@ -87,11 +87,11 @@ we see that maximizing $H_N$ is equivalent to maximizing $\mathcal{L}_\text{KoLe
 
 ## An intuitive connection between the closest neighbour and the differential entropy
 Imagine that you are at your favorite band's biggest show of the decade.
-People density in the stadium would probably look something like this:
+The crowd density in the stadium would probably look something like this:
 
 ![Figure 2](./stadium.avif)
 
-The left view shows individual people, while the right figure shows the underlying room density.
+The left view shows individual people - represented as dots - while the right figure shows the underlying room density.
 Naturally, the latter is non-uniform: everyone wants to be as close as possible to the band, and back corners draw less attention than the front of the stage.
 
 Say you are located at position $\vx_1 \in \R^2$, and the $N-1$ other people enjoying the show with you have respective 2D coordinates $\vx_2, \dots, \vx_N$.
@@ -134,7 +134,7 @@ Given that N is large, we can approximate $h(p)$ by its empirical expectation $-
 By definition, $R_i$ is the distance between $\vx_i$ and its closest neighbour, i.e. $R_i = \min_{j \neq i} || \vx_i - \vx_j ||_2 $.
 This yields the final result:
 
-$$h(p) \simeq \frac{-1}{N}\sum_{i=1}^N \log p(\vx_i) \simeq 2 \sum_{i=1}^N \log \min_{j \neq i} || \vx_i - \vx_j ||_2 + \log N + \log A $$
+$$h(\rvx) \simeq \frac{-1}{N}\sum_{i=1}^N \log p(\vx_i) \simeq 2 \sum_{i=1}^N \log \min_{j \neq i} || \vx_i - \vx_j ||_2 + \log N + \log A $$
 
 The KoLeo regularization directly derives from this formula;
 {{< citet "sablayrolles2018spreading" >}} added a minus sign (so minimizing it maximizes the differential entropy), and removed $A$ and $N$ (the former is a fixed constant, and the latter is fixed by the batch size when training).
@@ -221,9 +221,9 @@ We recognize the **cumulative distribution function of an exponential distributi
 the random variable $(N-1)R_i^d$ converges in probability to an exponential distribution of rate $f(\vx_i)V_1$.
 
 As our objective is to connect $\log R_i$ to $\log f(\vx_i)$, it is natural to consider the logarithm of an exponentially distributed random variable.
-If $Z \sim \text{Exp}(\lambda)$, then:
+If $\rz \sim \text{Exp}(\lambda)$, then:
 
-$$\E \left[ \log Z \right] = \log \lambda + \gamma,$$
+$$\E \left[ \log \rz \right] = \log \lambda + \gamma,$$
 
 where $\gamma$ is the Euler constant.
 Concluding the proof is a matter of using this relation with our random variable
@@ -236,17 +236,17 @@ $$
 \end{aligned}
 $$
 
-We drop the conditioning on $\vx_i$ using the expected value over $\vx_i \sim f$:
+If we drop the conditioning on $\vx_i$ by using the expected value of $\rvx \sim f$, we recognize the definition of $h(\rvx)$:
 
 $$
--\E \left[ \log f(\vx) \right] =  -\E \left[ \log R^d \right]  - \log(N-1) + \log V_1 + \gamma
+h(\rvx) = -\E \left[ \log f(\rvx) \right] =  -\E \left[ \log R^d \right]  - \log(N-1) + \log V_1 + \gamma
 $$
 
-And the hypothesis $N \gg 1$ allows us to approximate both expected values by their Monte-Carlo estimators:
+And the hypothesis $N \gg 1$ allows us to approximate the expected values by its Monte-Carlo estimator:
 
 $$
 \begin{split}
--\frac{1}{N} \sum_{i=1}^N \log f(\vx_i) &= \frac{-1}{N} \sum_{i=1}^N \log R_i^d - \log(N-1) + \log V_1 + \gamma \\
+h(\rvx) &= \frac{-1}{N} \sum_{i=1}^N \log R_i^d - \log(N-1) + \log V_1 + \gamma \\
 &= \frac{-d}{N} \sum_{i=1}^N \log \min_{j \neq i} || \vx_i - \vx_j ||_2 - \log(N-1) + \log V_1 + \gamma
 \end{split}
 $$
