@@ -4,6 +4,8 @@ title: Romain Séailles
 theme: ["PaperMod"]
 
 params:
+  author: Romain Séailles
+
   # Main page options
   homeInfoParams:
     Title: Welcome
