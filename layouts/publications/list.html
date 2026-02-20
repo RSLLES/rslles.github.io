@@ -15,7 +15,9 @@
     {{- if eq .Title "Papers" }}
     <h2>Publications</h2>
     <ul class="pub-list">
-        {{- range sort .RegularPages "Params.year" "desc" }}
+        {{- $papers := sort .RegularPages "Title" "asc" }}
+        {{- $papers = sort $papers "Date" "desc" }}
+        {{- range $papers }}
         <li class="pub-bib-entry">
             <span><strong>{{ .Params.author }}</strong>. </span>
             <br />
@@ -32,7 +34,7 @@
             {{- with .Params.journal }}<span><em>{{ . }}</em>.</span><br />{{ end }}
 
             <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <span>{{ .Params.year }}.</span>
+                <span>{{ .Date.Year }}.</span>
                 <span>
                     {{- range .Params.extra }}
                     [<a href="{{ .url }}" target="_blank">{{ .name }}</a>]
@@ -46,7 +48,9 @@
     {{- else if eq .Title "Talks" }}
     <h2>Talks</h2>
     <ul class="pub-list">
-        {{- range sort .RegularPages "Params.year" "desc" }}
+        {{- $talks := sort .RegularPages "Title" "asc" }}
+        {{- $talks = sort $talks "Date" "desc" }}
+        {{- range $talks }}
         <li class="pub-bib-entry">
             <span>
                 {{- if .Params.link -}}
@@ -60,7 +64,7 @@
             {{- with .Params.context }}<span><em>{{ . }}</em>.</span><br />{{ end }}
 
             <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <span>{{ .Params.year }}.</span>
+                <span>{{ .Date.Year }}.</span>
                 <span>
                     {{- range .Params.extra }}
                     {{- if .url }}
