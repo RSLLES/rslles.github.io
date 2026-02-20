@@ -8,10 +8,3 @@
     line-height: 1.6;
 }
 
-.pub-bib-entry a {
-    text-decoration: none;
-}
-
-.pub-bib-entry a:hover {
-    text-decoration: underline;
-}
