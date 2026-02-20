@@ -57,7 +57,7 @@ If we ignore the logarithm for a second, one may think of it as collection of co
 In practice, {{< citet "sablayrolles2018spreading" >}} have illustrated the impact of the KoLeo regularization when paired with another loss function. 
 Given a final objective of the form $\mathcal L(f_\theta(\vx), \vy) = \mathcal L_\text{originale}(f_\theta(\vx), \vy) + \lambda \mathcal L_\text{KoLeo}(f_\theta(\vx))$, they showed that the embeddings distribution converges to a uniform distribution with increasing $\lambda$: 
 
-![Figure 1](./koleo_illustration.png)
+![Figure 1](./koleo_illustration.avif)
 
 You may notice nat this regularization only works for embeddings that belong to a **bounded support**; if not, the regularization can push them away to infinity.
 
@@ -89,7 +89,7 @@ we see that maximizing $H_N$ is equivalent to maximizing $\mathcal{L}_\text{KoLe
 Imagin that you are at your favorite band's biggest show of the decade.
 The density of personn in the stadium would probably look somehow like this:
 
-![Figure 2](./stadium.jxl)
+![Figure 2](./stadium.avif)
 
 Naturally, the room density is non-uniform: everyones want's to be as close as possible to the band, and back corners draw less attention than the front of the stage.
 

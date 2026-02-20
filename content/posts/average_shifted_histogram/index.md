@@ -56,7 +56,7 @@ While it may seem inoffensive, changing $t_0$ may have great consequences on the
 The following figure ({{< citep "scott2010averaged" >}}) shows histograms of the estimated distance (in feet) of Sammy Sosa’s 36 home runs hit at at home in Chicago’s Wrigley Field among the 66 home runs he scored during the 1998 baseball season. 
 Each histogram has a bin size of 25 feet but three different choices of $t_0$:
 
-![Figure 1](./t0_impact.jpg)
+![Figure 1](./t0_impact.avif)
 
 As one may see, they look very different from each other, highlighting the impact of the choice of $t_0$.
 Furthermore, as shown by {{< citet "freedman1981histogram" >}}, assuming one knows the sampling density $f$ (which we don't in practice), the "optimal" bin width formula in some sense is: 
@@ -75,7 +75,7 @@ The core idea is simple: given a bin size $h$ and an integer $n$, compute $m$ hi
 **average them all together** to yield a new histogram.
 The result is a smoother histogram with bin size $h/m$, as depicted in the next figure ({{< citep "scott2010averaged" >}}) for different values of $m$:
 
-![Figure 2](./ash_triangle.png)
+![Figure 2](./ash_triangle.avif)
 
 
 Let's frame this mathematically.

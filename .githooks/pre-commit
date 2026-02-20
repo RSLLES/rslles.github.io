@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Pre-commit hook: only AVIF and WebP images may be committed, max 500 KB.
+# Install: git config core.hooksPath .githooks
+
+set -euo pipefail
+
+MAX_KB=500
+
+# All image extensions we recognise
+IMAGE_EXTS="png jpg jpeg gif bmp tif tiff heic heif jxl ico svg raw cr2 nef arw webp avif"
+
+# Only these may be committed
+ALLOWED_EXTS="avif webp"
+
+FAILED=0
+
+while IFS= read -r FILE; do
+    [[ -f "$FILE" ]] || continue
+
+    EXT="${FILE##*.}"
+    EXT="${EXT,,}"  # lowercase
+
+    IS_IMAGE=0
+    for e in $IMAGE_EXTS; do
+        [[ "$EXT" == "$e" ]] && IS_IMAGE=1 && break
+    done
+
+    [[ "$IS_IMAGE" -eq 0 ]] && continue
+
+    # Check extension is allowed
+    IS_ALLOWED=0
+    for e in $ALLOWED_EXTS; do
+        [[ "$EXT" == "$e" ]] && IS_ALLOWED=1 && break
+    done
+
+    if [[ "$IS_ALLOWED" -eq 0 ]]; then
+        echo "COMMIT BLOCKED: '$FILE'"
+        echo "  Only AVIF and WebP images may be committed."
+        echo "  Run: ./convert_image.sh <source> to generate AVIF/WebP, then commit those instead."
+        FAILED=1
+        continue
+    fi
+
+    # Check file size
+    SIZE_BYTES=$(stat -c%s "$FILE")
+    SIZE_KB=$(( SIZE_BYTES / 1024 ))
+    if (( SIZE_KB > MAX_KB )); then
+        echo "COMMIT BLOCKED: '$FILE' is ${SIZE_KB} KB (limit: ${MAX_KB} KB)"
+        echo "  Reduce image dimensions or quality before committing."
+        FAILED=1
+    fi
+
+done < <(git diff --cached --name-only --diff-filter=ACM)
+
+exit "$FAILED"
