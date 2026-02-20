@@ -1,7 +1,7 @@
 ---
 title: "The KoLeo regularization"
-date: 2026-01-15
-draft: true
+date: 2026-02-20
+draft: false
 bib:
   - id: "kozachenko1987sample"
     title: "Sample Estimate of the Entropy of a Random Vector "
@@ -69,7 +69,7 @@ a measure of its information content, and among all distributions, it is the uni
 Shannon attempt to extend the definition of entropy to continuous variables yielded the **differential entropy**, that is just the regular entropy with the sum swapped for an integral.
 Given $X \sim f$, it writes:
 
-$$ h(X) = \E \left[ - \log f(X) \right] = -\int_\sX f(x) \log f(x)dx.$$ 
+$$ h(X) = \E \left[ - \log f(X) \right] = -\int_\sX f(\vx) \log f(\vx)d\vx.$$ 
 
 While differential entropy does not retain all the convenient properties of its original counterpart (it is not always positive, it is not dimensionless), 
 it does conserve one that is of interest to us: **for a fixed support $S$, then among all densities on $S$, the uniform distribution maximized the differential entropy.**
@@ -85,149 +85,184 @@ where $V_1 = \int_{\sB(0, 1)}$ is the volume of the unit-ball and $\gamma$ is [E
 Assuming that $N$ (i.e. the batch size) and $d$ (the embedding dimension) are constants in a deep learning framework,
 we see that maximizing $H_N$ is equivalent to maximizing $\mathcal{L}_\text{KoLeo}$ (which are, with those considerations, equal up to a negative scale and an offset).
 
-## An intuitive connection between your closest neighbour and the differential entropy
-Imagin that you are at your favorite band's biggest show of the decade.
-The density of personn in the stadium would probably look somehow like this:
+## An intuitive connection between the closest neighbour and the differential entropy
+Imagine that you are at your favorite band's biggest show of the decade.
+People density in the stadium would probably look something like this:
 
 ![Figure 2](./stadium.avif)
 
-Naturally, the room density is non-uniform: everyones want's to be as close as possible to the band, and back corners draw less attention than the front of the stage.
+The left view shows individual people, while the right figure shows the underlying room density.
+Naturally, the latter is non-uniform: everyone wants to be as close as possible to the band, and back corners draw less attention than the front of the stage.
 
-Say you are located at position $x_1 \in \R^2$, and the $N-1$ other people enjoying the show with you have have respective 2D coordinates $x_2, \dots, x_N$.
-Say we have access to the density function of the room $d: \R^2 \longmapsto \R_+$, that for a position $x$ gives you the rough density of people at this position, in number of people per squared meter.
+Say you are located at position $\vx_1 \in \R^2$, and the $N-1$ other people enjoying the show with you have respective 2D coordinates $\vx_2, \dots, \vx_N$.
+We define the density function of the place $d: \R^2 \longmapsto \R_+$ (right view of the precedent figure)
+as the function that gives you the local density at a point $\vx$ in persons per unit of surface.
 
+The intuitive proof of the KoLeo regularization is to realize that your "personal space" can be expressed in two different ways:
+- On one hand, it is the reciprocal of the density at your location, i.e $1/d(x_1)$.
+For example, if $1/d(\vx_1)=4\text{people}/m^2$, then your personal space is $1/d(\vx_1)$, i.e. $0.25 m^2/\text{people}$.
+This is a theoretical approach, that we could compute if we have access to the convenient $d$ function.
+- On the other hand, we could also define your personal space using the distance that separates you from your nearest neighbor.
+For example, say the closest person to you is $\vx_i$: 
+then your individual space is roughly a circle of radius $R=||\vx_1 - \vx_i||_2$, which has an area of $\pi R^2$.
+This is an experimental approach, that we have access to using actual data - or people - sampled from the theoretical distributions.
 
+I should add a grain of salt here: defining your personal space using a circle is arbitrary; we could as well use a square or any other shape.
+The point is that this surface - however complicated it is - depends on the distance that separates you from the closest music lover.
+In a more general framework, we can write that your personal space is $AR^2$, where $A$ is an unknown constant.
 
-What is you personal space ? 
-- One one way, this is the reciprocal of the density at your place: if around you $d(x_1)$ is $4p/m^2$, then your personal space is $1/d(x_1): 0.25 m^2/p$.
-- But we could also define this using the distance of your nearest neighbor.
-Say the closest person to you is $x_i$: then your individual space is roughly a circle of radius $R=||x_1 - x_i||_2$, which has an area of $\pi R^2$.
+As those two views define the same quantity, we have:
 
-To be fair: picking your personnal volume to be a circle is arbitrary: it may has well be a square - with an area of $R^2$ - or any weird shape whose surface can be complicated.
-What we can agree on however, is that this surface depends on the distance with the closest musiclover, so in some general sens we can say that your personal surface si $AR^2$ with $A$ an unknown constant.
+$$\frac{1}{d(\vx_1)} \simeq A R_1^2$$
 
-If we assume those two ways of definin your personal spaces are equal, we have:
+In this illustration, the concept of "people density" is analogous to the concept of probability density function.
+They are equivalent, up to the number of samples: $d(\vx) = Np(\vx)$ (probability functions sum to one while densities sum to the total number of people).
+We can then write:
 
-$$
-\frac{1}{d(x_1)} \simeq A R_1^2
-$$
+$$\frac{1}{Np(\vx_1)} \simeq AR_1^2$$
 
-Note that obviously, given their name, the concept of density is closely related to the concept of probability density function.
-In fact, they are both the same up to the number of samples: $d(x) = Np(x)$. 
-Integrating $p$ over the entire admissible space would give $\int_\text{stade de France} p = 1$, while $\int_\text{stade de France} d = N$.
-This yield the following derivation:
+Composing with a log:
 
-$$
-\frac{1}{Np(x_1)} \simeq AR_1^2
-$$
+$$-\log N -\log p(\vx_1) \simeq \log(A) + 2\log R_1$$
 
-Using the log:
+$$-\log p(\vx_1) \simeq \log(AN) + 2\log R_1$$
 
-$$-\log N -\log p(x_1) \simeq \log(A) + 2\log R_1$$
+We have successfully isolated $-\log p(\vx_1)$, that is the core element of computing the differential entropy $h(p) = \E [ -\log p ]$.
 
-$$-\log p(x_1) \simeq \log(AN) + 2\log R_1$$
+Finally, the same derivations hold true for any other people in the room.
+Given that N is large, we can approximate $h(p)$ by its empirical expectation $-1/N\sum_{i=1}^N \log p(\vx_i)$.
+By definition, $R_i$ is the distance between $\vx_i$ and its closest neighbour, i.e. $R_i = \min_{j \neq i} || \vx_i - \vx_j ||_2 $.
+This yields the final result:
 
-We have sucessfuly isolated $-\log p(x_1)$, that is the core element of computing the differential entropy $h(p) = \E [ -\log p ]$ !
-Instead of focusing solely on you, we can also use all the others personn in the room, and approximate this term by it's emperical expectation.
-Remember that by definition, $R_1$ was the distance to your closest neighbour, thus in more general therm we have $R_i = \min_{j \neq i} || x_i - x_j ||_2 $.
-This yiels this final result:
+$$h(p) \simeq \frac{-1}{N}\sum_{i=1}^N \log p(\vx_i) \simeq 2 \sum_{i=1}^N \log \min_{j \neq i} || \vx_i - \vx_j ||_2 + \log N + \log A $$
 
-$$h(p) \simeq \frac{-1}{N}\sum_{i=1}^N \log p(x_i) \simeq 2 \sum_{i=1}^N \log \min_{j \neq i} || x_i - x_j ||_2 + \log N + \log A $$
+The KoLeo regularization directly derives from this formula;
+{{< citet "sablayrolles2018spreading" >}} added a minus sign (so minimizing it maximizes the differential entropy), and removed $A$ and $N$ (the former is a fixed constant, and the latter is fixed by the batch size when training).
+We have reached the final formula:
 
-The KoLeo regularization directly derives from this; they added a minus sign, as we like to think of regularizxation as term we would like to minimize, but here it corresponds to maximize the entropy to spread things out, and they remove the constants $A$ and $N$ (the latter is usually constant, as it is fixed by the batch size), yielding:
-
-$$\gR_\text{KoLeo} = -\sum_{i=1}^N \log \min_{j \neq i} || x_i - x_j ||_2 .$$
+$$\gR_\text{KoLeo} = -\sum_{i=1}^N \log \min_{j \neq i} || \vx_i - \vx_j ||_2 .$$
 
 ## The missing constants
-While previous derivation established an intuive explanation to the final version of the KoLeo regularization, it is not rigourous enough to be a proper demonstration.
-So let's tackle that, shall we ?
+While previous derivations establish an intuitive explanation of the final version of the KoLeo regularization,
+they strongly rely on the unproven connection between $R$ and $p$.
+Let's approach this more rigorously.
 
-Let's follow the same chain of thoughts as before, but with more rigourous tools.
-Assume we have $N$ points $x_i, \dots, x_N$ sampled from a distribution with p.d.f $f$ on a bounded space $\gE$.
-Let fix an arbitrary $i$ and denote by $R_i = \min_{j \neq i} || x_i - x_j ||_2 $ it's distance to its nearest neighbor.
+Assume we have $N$ points $\vx_i, \dots, \vx_N$ sampled from a distribution with probability distribution function $f$ on a bounded space $\gE$.
+Let $i \in \{ 1, \dots, N \}$, and let $R_i = \min_{j \neq i} || \vx_i - \vx_j ||_2 $ be the distance of $\vx_i$ to its nearest neighbor.
 Let's analyze the cumulative distribution function of $R_i$:
-
-$$\sP (R_i \leq \alpha | x_i) 
-= 1 - \sP (R_i > \alpha| x_i) 
-= 1 - \prod_{j \neq i }\sP (|| x_i - x_j ||_2 > \alpha| x_i)
-= 1 - \prod_{j \neq i }\left(1 - \sP (|| x_i - x_j ||_2 \leq \alpha| x_i) \right)
-$$
-
-Given that $x_i$ is fixed, the probability $\sP (|| x_i - x_j ||_2 \leq \alpha | x_i)$  is simply the probability of $x_j$ to fall within a ball of radius $\alpha$ centered around $x_i$:
-
-$$\sP (|| x_i - x_j ||_2 \leq \alpha | x_i) = \int_{\gB (x_i, \alpha)} f$$
-
-where $\gB(c, r)$ is the ball of radius $r \geq 0$ with origin $c \in \R^d$.
-
-Suppose the radius of our ball is small enough, i.e $r \leq 1$.
-Then over the entire ball $\gB(c, r)$, the continuity of $f$ means that $f$ will be roughly constant in this volume, equal to $f(0)$,
-and thus the value of the integral will go towards $f(c) V_r$ where $V_r$ is the volume of $\gB(c, r)$.
-Note that $V_r = V_1r^d$.
-This is trivial to show, given an arbitrary small $\epsilon$,
-the continuity of $f$ implies there exists an $r > 0$ such that $\forall x \in \gB(c, r), |f(x) - f(c)| \leq \epsilon$.
-Thus, we have:
-
-$$|\int_{\gB(c, r)}{f} - f(c)V_r|
-= |\int_{\gB(c, r)}{f(x) - f(c)dx}|
-\leq \max_{x \in \gB(c, r)} |f(x) - f(c)| V_r \leq epsilon V_r$$
-
-Following the previous analogy, we accept to be in the case where $N \gg 1$.
-Thus, we can exploit this to make the radius decrease.
-We could $R_i$ for $NR_i$ in our analyze instead, 
-and then as $\sP (NR_i \leq \alpha | x_i) = \sP (R_i \leq \alpha/N | x_i)$, 
-we have a decreasing $r \to 0$ for $N \to \infty$, meaning we have:
-
-$$\sP (|| x_i - x_j ||_2 \leq \alpha / N | x_i) = f(x_i)V(\alpha / N) + o(1)$$
-
-And then:
-
-$$\sP (NR_i \leq \alpha | x_i) 
-= 1 - \prod_{j \neq i }\left(1 - f(x_i)V_1 (\alpha / N)^d \right)
-= 1 - \left(1 - f(x_i)V_1 (\alpha / N)^d \right)^{N-1}
-$$
-
-This term my remind you of the proposition $(1 + \lambda /n)^n \to e^{\lambda}$ that you may have encounter in your favorite calculus textbook.
-To connect our proposition to this, we can modified the study variable $NR_i$ to be $(N-1)R_i^d$ instead: then we have:
 
 $$
 \begin{split}
-\sP ((N-1)R_i^d \leq \alpha | x_i) 
-&= \sP (R_i \leq (\alpha/(N-1))^{1/d} | x_i) \\
-&= 1 - \left(1 - f(x_i)V_1 \alpha / (N-1) \right)^{N-1} \\
-&= 1 - \exp(- f(x_i)V_1 \alpha) + o(1)
+\sP (R_i \leq \alpha \mid \vx_i) 
+&= 1 - \sP (R_i > \alpha \mid \vx_i) \\
+&= 1 - \prod_{j \neq i }\sP (|| \vx_i - \vx_j ||_2 > \alpha \mid \vx_i) \\
+&= 1 - \prod_{j \neq i }\left(1 - \sP (|| \vx_i - \vx_j ||_2 \leq \alpha \mid \vx_i) \right) \\
 \end{split}
 $$
 
-The end formula is the cdf of an exponential distribution, and we have just prooved the convergence in probability of the random variable $(N-1)R_i^d$ to an exponential distribution of rate $f(x_i)V_1$.
-Finaly, as we want to connect to the quantity $\log R_i$ to $\log f(x_i)$; thus it is natural to have a look at the logarithme of an exponentially distributed random variable.
-Let $Z$ be a rv that follows an exponential distribution of rate $\lambda$, then
+For $\vx_i$ fixed, the probability $\sP (|| \vx_i - \vx_j ||_2 \leq \alpha \mid x_i)$  is the probability of $\vx_j$ being inside the ball of radius $\alpha$ centered around $\vx_i$:
 
-$$\E \left[ \log Z \right] = \log \lambda + \gamma$$
+$$\sP (|| \vx_i - \vx_j ||_2 \leq \alpha \mid \vx_i) = \int_{\gB (\vx_i, \alpha)} f(\vx) d\vx$$
+
+where $\gB(\vc, r)$ is the ball of radius $r \geq 0$ and center $\vc \in \R^d$.
+
+If the radius of our ball is small, i.e. $r \ll 1$, the continuity of $f$ implies that it is roughly equal to $f(\vc)$ inside the ball $\gB(\vc, r)$.
+Indeed, let $\epsilon > 0$, then the continuity of $f$ implies there exists an $r > 0$ such that $\forall \vx \in \gB(\vc, r), |f(\vx) - f(\vc)| \leq \epsilon$.
+Thus, we have:
+
+$$
+\begin{split}
+\left| \int_{\gB(\vc, r)}{f(\vx)d\vx} - f(\vc)V_r \right|
+&= \left| \int_{\gB(\vc, r)}{f(\vx) - f(\vc) d\vx} \right| \\
+&\leq \int_{\gB(\vc, r)}{ \left|f(\vx) - f(\vc) \right| d\vx}  \\
+&\leq \int_{\gB(\vc, r)}{ \epsilon d\vx} \leq \epsilon V_r
+\end{split}
+$$
+
+Hence, the value of the integral is approximately $f(\vc) V_r$ where $V_r$ is the volume of $\gB(\vc, r)$.
+We also remark that the volume of any ball $V_r$ is equal to the volume of the unit ball $V_1$ scaled by its radius power $d$,
+i.e. $V_r = r^d V_1$ (proof by substitution).
+
+Let's assume that $N \gg 1$; it simply means that we have access to many samples.
+This is both required - otherwise, the distance to the closest neighbour would not be relevant to the local value of the density -
+and acceptable - in the previous concert analogy, there are many people in the room.
+We can exploit this assumption to make the radius decrease:
+if we switch $R_i$ for $NR_i$ in our derivations, 
+we end up with $\sP (NR_i \leq \alpha \mid \vx_i) = \sP (R_i \leq \alpha/N \mid \vx_i)$, 
+meaning we have a decreasing $r \to 0$ when $N \to \infty$:
+
+$$\sP (|| \vx_i - \vx_j ||_2 \leq \alpha / N \mid \vx_i) \underset{N \to \infty}{\simeq} f(\vx_i)V_{\alpha / N}
+= f(\vx_i)V_1 \left(\frac{\alpha}{N} \right)^d$$
+
+And then:
+
+$$
+\begin{split}
+\sP (NR_i \leq \alpha \mid \vx_i) 
+&\underset{N \to \infty}{\simeq} 1 - \prod_{j \neq i }\left(1 - f(\vx_i)V_1 \left(\frac{\alpha}{N} \right)^d \right) \\
+&= 1 - \left(1 - f(\vx_i)V_1 \left(\frac{\alpha}{N} \right)^d \right)^{N-1} \\
+\end{split}
+$$
+
+This final term may remind you of the proposition $(1 + \lambda /n)^n \underset{n \to \infty}{\rightarrow} e^{\lambda}$ that you may have encountered in your calculus textbook.
+It is the last piece of the puzzle.
+If we once again switch the analyzed variable $NR_i$ for $(N-1)R_i^d$, we can apply this equality, meaning:
+
+$$
+\begin{split}
+\sP ((N-1)R_i^d \leq \alpha \mid \vx_i) 
+&= \sP (R_i \leq \left( \frac{\alpha}{N-1} \right)^{1/d} \mid \vx_i)  \\
+&\underset{N \to \infty}{\simeq} 1 - \left(1 - f(\vx_i)V_1 \frac{\alpha}{N-1} \right)^{N-1} \\
+&\underset{N \to \infty}{\simeq} 1 - \exp \left(- f(x_i)V_1 \alpha \right)
+\end{split}
+$$
+
+We recognize the **cumulative distribution function of an exponential distribution**:
+the random variable $(N-1)R_i^d$ converges in probability to an exponential distribution of rate $f(\vx_i)V_1$.
+
+As our objective is to connect $\log R_i$ to $\log f(\vx_i)$, it is natural to consider the logarithm of an exponentially distributed random variable.
+If $Z \sim \text{Exp}(\lambda)$, then:
+
+$$\E \left[ \log Z \right] = \log \lambda + \gamma,$$
 
 where $\gamma$ is the Euler constant.
-Now is a matter of injecting this into our equation and dropping the conditionning to $x_i$:
+Concluding the proof is a matter of using this relation with our random variable
+$(N-1)R_i^d \sim \text{Exp}\left(f(\vx_i)V_1 \right)$:
 
 $$
 \begin{aligned}
-\E \left[ \log \left( (N-1)R_i^d \right) \mid x_i \right] &= \log (f(x_i) V_1) + \gamma \\
-\implies \log(N-1) + \E \left[ \log R^d  \right] &= \E \left[ \log f(x) \right] + \log V_1 + \gamma
+\E \left[ \log \left( (N-1)R_i^d \right) \mid x_i \right] &= \log (f(\vx_i) V_1) + \gamma \\
+\implies -\log f(\vx_i)  &=  -\E \left[ \log R_i^d \mid \vx_i \right] - \log(N-1) + \log V_1 + \gamma
 \end{aligned}
 $$
 
-Again, the hypothesis $N \gg 1$ allows us to approximate both expected values with their respecitive monte carlo estimators:
+We drop the conditioning on $\vx_i$ using the expected value over $\vx_i \sim f$:
 
-$$\begin{aligned}
-\log(N-1) + \frac{1}{N} \sum_{i=1}^N \log R_i^d &= \frac{1}{N} \sum_{i=1}^N \log f(x) + \log V_1 + \gamma \\
-\implies -\frac{1}{N} \sum_{i=1}^N \log f(x) &= \frac{-1}{N} \sum_{i=1}^N \log R_i^d - \log(N-1) + \log V_1 + \gamma
-\end{aligned}$$
+$$
+-\E \left[ \log f(\vx) \right] =  -\E \left[ \log R^d \right]  - \log(N-1) + \log V_1 + \gamma
+$$
 
-And finaly, we have reach an approximation of the MC estimate of the diferential entropy:
+And the hypothesis $N \gg 1$ allows us to approximate both expected values by their Monte-Carlo estimators:
 
-## Usage
+$$
+\begin{split}
+-\frac{1}{N} \sum_{i=1}^N \log f(\vx_i) &= \frac{-1}{N} \sum_{i=1}^N \log R_i^d - \log(N-1) + \log V_1 + \gamma \\
+&= \frac{-d}{N} \sum_{i=1}^N \log \min_{j \neq i} || \vx_i - \vx_j ||_2 - \log(N-1) + \log V_1 + \gamma
+\end{split}
+$$
 
-The Ko-Leo regularization is now a widespread tools in machine learning:
-it is also behind the impressive Dinov2 training, helping the latent space to spread as much as possible.
+And we reach the final form of the Kozachenko–Leonenko entropy estimator.
+For additional information (and more rigorous demonstrations) about this estimator,
+we redirect the reader to {{< citet "delattre2017kozachenko" >}}.
 
-## Code
+## Implementation
+The KoLeo regularization can be implemented in a few lines of Python code with PyTorch.
+Note however that it has a $\gO(N^2)$ memory cost due to the pairwise distance computation.
 
-Implementation is trivial, but it requires a $\gO(N^2)$ cost du to the pairwise distance computation.
+```python
+def koleo_reg(x : torch.Tensor, eps:float=1e-9) -> torch.Tensor:
+    """Compute the KoLeo regularization, as defined by Sablayrolles et al. (2019)"""
+    d = torch.cdist(x, x, p=2).fill_diagonal_(float('inf'))
+    r = torch.amin(d, dim=1)
+    return -torch.log(r + eps).mean()
+  ```
