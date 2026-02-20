@@ -35,46 +35,46 @@ bib:
     url: "https://arxiv.org/abs/2304.07193"
 ---
 
-In manifold learning, a standard desire is to cover the latent space as much as possible.
-Indeed, imagine learning a latent space of dimension 3 and ending up with a network that only uses a subset of it, say only one dimension:
+In manifold learning, a common desire is to cover the latent space as much as possible.
+Indeed, imagine configuring a neural network to use a latent space of dimension 3,
+but after training, you realize that it effectively only uses a subset of it, say 1 dimension:
 it feels like wasted resources.
-In self-supervised learning representation works such as DinoV2 ({{< citep "oquab2023dinov2" >}}), their goal is to provide a meaningful embedding to all natural images.
-Therefore, it makes sense to design such a latent space such that if we take a random natural image $\rvx \in \rho_\text{natural images}$ and process it with dino $\rvy = \operatorname{Dino}(\rvx)$,
-then the resulting distribution of embeddings, i.e. the distribution of $\rvy$, spreads nicely and uniformly over the manifold (in the case of Dino, the manifold is the d-dimensional hyperball).
+In self-supervised representation works, such as DinoV2 ({{< citep "oquab2023dinov2" >}}), the goal is to provide meaningful embeddings to natural images.
+Therefore, one would expect that given independent random natural images, the resulting DinoV2-embeddings should spread uniformly over the d-dimensional hyperball (that is the manifold of DinoV2's embeddings).
 
-To this end, the machine learning community has been in search of a regularization that would encourage the uniform spreading of embeddings.
-That is precisely the topic of today's post, with a small dive into the *KoLeo regularizer!*
+Well, that is precisely the mission of the *KoLeo regularization* - a regularization that encourages the uniform spreading of embeddings -, the topic of today's post.
 
-## A geometric interpretation
-Let's start by directly tackling the regularization proposed by {{< citet "sablayrolles2018spreading" >}}.
-Let's define $N$ vectors $\vx_1, \dots, \vx_n$ of $\R^d$.
-The KoLeo regularizer is:
+## Formula and intuition
+Consider $N$ vectors $\vx_1, \dots, \vx_n$ of $\R^d$.
+The *KoLeo regularizer* defined by {{< citet "sablayrolles2018spreading" >}} writes:
 
 $$\mathcal L_\text{KoLeo} = -\sum_{i=1}^N \log \min_{j \neq i} || \vx_i - \vx_j ||.$$
 
-From a geometric point of view, this corresponds to the average negative log distance of each point to its nearest neighbour.
-Therefore, minimizing $\mathcal L_\text{KoLeo}$ effectively maximizes the quantities $|| \vx_i - \vx_j ||$, repulsing vectors away from one another with a force that is decreasing and concave with respect to the distance to their closest neighbour.
-If we ignore the logarithm for a second, one may think of it as compressed springs repulsing each pair of close embeddings, just like [Hooke's law](https://en.wikipedia.org/wiki/Hooke's_law) creates a repulsive force that is proportional to the extension/compression for extended/compressed springs.
+It corresponds to the **average negative log-distance of each point to its nearest neighbour**.
+Therefore, minimizing $\mathcal L_\text{KoLeo}$ effectively maximizes the quantities $|| \vx_i - \vx_j ||$, repulsing vectors away from one another with a force that is decreasing with respect to their individual distance to their closest neighbour.
+If we ignore the logarithm for a second, one may think of it as collection of compressed springs connecting pairs of close embeddings that pushes them away one from the other with a repulsive force proportional to the compression of the springs (you may have a look at [Hooke's law](https://en.wikipedia.org/wiki/Hooke's_law)).
 
-Here is an illustration ({{< citep "sablayrolles2018spreading" >}}) of its impact when paired with another loss function through a parameter $\lambda$:
+In practice, {{< citet "sablayrolles2018spreading" >}} have illustrated the impact of the KoLeo regularization when paired with another loss function. 
+Given a final objective of the form $\mathcal L(f_\theta(\vx), \vy) = \mathcal L_\text{originale}(f_\theta(\vx), \vy) + \lambda \mathcal L_\text{KoLeo}(f_\theta(\vx))$, they showed that the embeddings distribution converges to a uniform distribution with increasing $\lambda$: 
 
 ![Figure 1](./koleo_illustration.png)
 
-Note that the embeddings need to belong to a bounded support, otherwise the regularization pushes them away to infinity.
+You may notice nat this regularization only works for embeddings that belong to a **bounded support**; if not, the regularization can push them away to infinity.
 
 But where does this formula come from?
 The KoLeo regularizer is derived from the *Kozachenko–Leonenko differential entropy estimator* ({{< citep "kozachenko1987sample" >}}).
+
 Back in your physics or information classes, you may have seen that the entropy of a discrete distribution is
-a measure of its information content.
-Overall possible distributions, entropy is maximized by the uniform distribution.
-For continuous variables, entropy analogue is the differential entropy, that is defined for $X \sim f$ as:
+a measure of its information content, and among all distributions, it is the uniform distribution that achieves maximal entropy. 
+Shannon attempt to extend the definition of entropy to continuous variables yielded the **differential entropy**, that is just the regular entropy with the sum swapped for an integral.
+Given $X \sim f$, it writes:
 
 $$ h(X) = \E \left[ - \log f(X) \right] = -\int_\sX f(x) \log f(x)dx.$$ 
 
-While it does not retain all the convenient properties of its original counterpart (it is not always positive, it is not dimensionless), 
-it does conserve one that is of interest to us: **given a bounded support, among all the densities on this support, the differential entropy is maximized by the uniform distribution.**
+While differential entropy does not retain all the convenient properties of its original counterpart (it is not always positive, it is not dimensionless), 
+it does conserve one that is of interest to us: **for a fixed support $S$, then among all densities on $S$, the uniform distribution maximized the differential entropy.**
 
-The connection with our initial problematic is thus immediate: to spread embeddings accross the latent space - i.e. getting close to a uniform distribution - an option is to **maximize the differential entropy of the embedding distribution**.
+The connection with our initial problematic is immediate: to spread embeddings accross the latent space, an option is to **maximize the differential entropy of the embedding distribution**.
 
 And it turns out that the Kozachenko–Leonenko differential entropy estimator - as its name suggests - is precisely an estimator of the differential entropy of a distribution given only samples from it.
 Given samples $\vx_0, \dots, \vx_N \in \R^d$ i.i.d from a distribution $\rho$ over a finite support, the Kozachenko–Leonenko estimator writes:
@@ -85,15 +85,18 @@ where $V_1 = \int_{\sB(0, 1)}$ is the volume of the unit-ball and $\gamma$ is [E
 Assuming that $N$ (i.e. the batch size) and $d$ (the embedding dimension) are constants in a deep learning framework,
 we see that maximizing $H_N$ is equivalent to maximizing $\mathcal{L}_\text{KoLeo}$ (which are, with those considerations, equal up to a negative scale and an offset).
 
-## A quick proof by hand
-You have been waiting for this moment for so long and now it is finaly happening:
-you are at your favorite artist biggest show of the decade (which must be the Red Hot Chillie Paper, I have no doubt about it).
-Here is a plan of the stade de france with the density of the crowd:
+## An intuitive connection between your closest neighbour and the differential entropy
+Imagin that you are at your favorite band's biggest show of the decade.
+The density of personn in the stadium would probably look somehow like this:
 
-Naturally, the room density is non-uniform - everyones want's to be as close as possible to - and back corners draw less attention than the front of the stage.
+![Figure 2](./stadium.jxl)
+
+Naturally, the room density is non-uniform: everyones want's to be as close as possible to the band, and back corners draw less attention than the front of the stage.
 
 Say you are located at position $x_1 \in \R^2$, and the $N-1$ other people enjoying the show with you have have respective 2D coordinates $x_2, \dots, x_N$.
 Say we have access to the density function of the room $d: \R^2 \longmapsto \R_+$, that for a position $x$ gives you the rough density of people at this position, in number of people per squared meter.
+
+
 
 What is you personal space ? 
 - One one way, this is the reciprocal of the density at your place: if around you $d(x_1)$ is $4p/m^2$, then your personal space is $1/d(x_1): 0.25 m^2/p$.
@@ -134,10 +137,6 @@ $$h(p) \simeq \frac{-1}{N}\sum_{i=1}^N \log p(x_i) \simeq 2 \sum_{i=1}^N \log \m
 The KoLeo regularization directly derives from this; they added a minus sign, as we like to think of regularizxation as term we would like to minimize, but here it corresponds to maximize the entropy to spread things out, and they remove the constants $A$ and $N$ (the latter is usually constant, as it is fixed by the batch size), yielding:
 
 $$\gR_\text{KoLeo} = -\sum_{i=1}^N \log \min_{j \neq i} || x_i - x_j ||_2 .$$
-
-## A geometric interpretation
-
-## An example
 
 ## The missing constants
 While previous derivation established an intuive explanation to the final version of the KoLeo regularization, it is not rigourous enough to be a proper demonstration.
