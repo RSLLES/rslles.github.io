@@ -9,7 +9,7 @@ extra:
   - name: "MaLGa"
     url: "https://malga.unige.it/"
   - name: "School program"
-    url: "https://malga.unige.it/education/schools/cil/"
+    url: "https://malga.unige.it/education/schools/cil/#programme"
   - name: "Slide deck"
     url: "/slide_decks/2026_cil_winter_school_learning_methods_for_SMLM.pdf"
 ---
