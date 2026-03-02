@@ -70,7 +70,7 @@ $$
 The kernel function can be thought of as a similarity function that measures how alike two elements are.
 In the expression of the MMD, the first two terms measure the average self-similarity within each distribution, i.e. how alike samples from the same distribution tend to be.
 The last term is a cross term that measures similarity across the two distributions.
-When $\mX = \mY$, all three terms are equal, and the sum cancels to zero.
+When $\mX = \mY$, all three terms cancels out and the MMD is null.
 We redirect the curious reader to the excellent course of {{< citet "mairal2022kernel" >}} for additional information about kernel methods for machine learning.
 
 In machine learning, a common usage of MMD is to train **generative models**. 
@@ -405,7 +405,7 @@ While the Gaussian kernel --- also known as radial basis function kernel (RBF) -
 
 First, on bandwidth selection. Better than the median, {{< citet "schrab2023mmd" >}}
 recommend to take 10 different bandwidths uniformly spaced between half the 5th-percentile and twice the 95th-percentile values.
-As the mean of the positive definite kernels is a positive definite kernel, you can simply use the mean of all those:
+As the mean of the positive definite kernels is a positive definite kernel, you can simply use the mean of all the kernels defined with these bandwidths:
 
 ```python
 class ExponentialKernel(nn.Module):
@@ -438,9 +438,82 @@ class ExponentialKernel(nn.Module):
 Here are the results with this new kernel, with a new best scoring validation metric of `0.164`:
 ![MMD mean](./mmd_mean.avif)
 
-However, in the previous derivation, the MMD can be defined as a supremum over functions $h$ in $\gH'$.
-Therefore, instead of a mean, we could compute the MMD for all these kernels and at the last moment use the one that provides the highest value for the MMD,
-a strategy that is aligned with the very definition of the MMD.
+You may notive that this code re-computes the percentiles for each new batch.
+A natural idea to leverage previously computed values is to use an exponential moving average, which will build smoother and more robust estimates: 
+
+```python
+class ExpMovingAverage(nn.Module):
+    """Exponential moving average for a 1D Tensor."""
+
+    mean: Tensor
+    is_initialized: Tensor
+
+    def __init__(self, lambd: float, n_values: int = 1) -> None:
+        super().__init__()
+        self.lambd = lambd
+        self.register_buffer("mean", torch.zeros((n_values,)))
+        self.register_buffer("is_initialized", torch.tensor(False, dtype=torch.bool))
+
+    @torch.compiler.disable
+    def _sync_values(self, x: Tensor) -> Tensor:
+        if dist.is_available() and dist.is_initialized():
+            x = x.clone()
+            dist.all_reduce(x, op=dist.ReduceOp.AVG)
+        return x
+
+    @torch.compiler.disable
+    def _initialize_buffer(self, x: Tensor):
+        x_synced = self._sync_values(x)
+        self.mean.copy_(x_synced)
+        self.is_initialized.fill_(True)
+
+    @torch.no_grad()
+    def forward(self, x: Tensor) -> Tensor:
+        """Update the current ema and return the new value."""
+        if not self.is_initialized:
+            self._initialize_buffer(x)
+            return self.mean
+        x_synced = self._sync_values(x)
+        self.mean.mul_(1.0 - self.lambd).add_(x_synced, alpha=self.lambd)
+        return self.mean
+
+
+class ExponentialKernel(nn.Module):
+    """Kernel that includes both Laplace Kernel (p=1) and Gaussian Kernel (p=2)."""
+
+    uniform_grid: Tensor
+    quantiles: Tensor
+
+    def __init__(self, p: float | int, n_kernels: int = 5, eps: float = 1e-9):
+        super().__init__()
+        self.p = p
+        self.eps = eps
+        self.register_buffer("uniform_grid", torch.linspace(0.0, 1.0, n_kernels))
+        self.register_buffer("quantiles", torch.tensor([0.05, 0.95]))
+        self.ema_q05 = ExpMovingAverage(1e-3)
+        self.ema_q95 = ExpMovingAverage(1e-3)
+
+    def compute_bandwidths(self, dists: Tensor) -> Tensor:
+        """Interpolates bandwidths between 0.5*q05 and 2.0*q95., see [3]."""
+        dists = dists.detach()
+        # classic masking resizes dists_no_zeros dynamically which crashes the compiler.
+        dists_no_zeros = torch.where(dists > self.eps, dists, float("nan"))
+        q05, q95 = torch.nanquantile(dists_no_zeros, self.quantiles)
+        q05, q95 = self.ema_q05(q05), self.ema_q95(q95)
+        low, high = 0.5 * q05, 2.0 * q95
+        return (high - low) * self.uniform_grid + low
+
+    def forward(self, z1: Tensor, z2: Tensor, reduction: str = "mean") -> Tensor:  # noqa: D102
+        dists = torch.cdist(z1, z2, p=self.p).pow(self.p)
+        kernels = torch.exp(-dists[..., None] / self.compute_bandwidths(dists))
+        return reduce(kernels, dim=-1, mode=reduction)
+```
+
+This new estimation technique brings the validation EMD to `0.152`.
+
+In the previous derivation, the MMD can be defined as a supremum over functions $h$ in $\gH'$.
+Therefore, instead of a mean, we could compute the MMD for all these kernels and at the last moment use the one that provides the highest MMD value,
+aligning kernel selection with the MMD philosophie.
 We refer to this strategy as `mmd_max`, and it can be implemented with the following code:
 
 ```python
@@ -459,6 +532,49 @@ def mmd_max(x: Tensor, y: Tensor, kernel: nn.Module, reduction: str) -> Tensor:
 
 With this new strategy, we have reached a validation metric of `0.133`.
 ![MMD max](./mmd_max.avif)
+
+{{< citet "schrab2023mmd" >}} also recommend to use both Laplace and RBF kernels with their bandwidths selection strategy:
+```python
+class LaplaceGaussianKernel(nn.Module):
+    """Mixed kernel combining Laplace (L1) and Gaussian (squared L2)."""
+
+    uniform_grid: Tensor
+    quantiles: Tensor
+
+    def __init__(self, n_kernels: int = 5, eps: float = 1e-9):
+        super().__init__()
+        self.eps = eps
+        self.register_buffer("uniform_grid", torch.linspace(0.0, 1.0, n_kernels))
+        self.register_buffer("quantiles", torch.tensor([0.05, 0.95]))
+        self.ema_l1_q05 = ExpMovingAverage(1e-3)
+        self.ema_l1_q95 = ExpMovingAverage(1e-3)
+        self.ema_l2_q05 = ExpMovingAverage(1e-3)
+        self.ema_l2_q95 = ExpMovingAverage(1e-3)
+
+    def _bandwidths(
+        self, dists: Tensor, ema_q05: ExpMovingAverage, ema_q95: ExpMovingAverage
+    ) -> Tensor:
+        dists_no_zeros = torch.where(dists > self.eps, dists, float("nan"))
+        q05, q95 = torch.nanquantile(dists_no_zeros, self.quantiles)
+        q05, q95 = ema_q05(q05), ema_q95(q95)
+        low, high = 0.5 * q05, 2.0 * q95
+        return (high - low) * self.uniform_grid + low
+
+    def forward(self, z1: Tensor, z2: Tensor, reduction: str = "mean") -> Tensor:  # noqa: D102
+        l1 = torch.cdist(z1, z2, p=1)
+        l2_sq = torch.cdist(z1, z2, p=2).square()
+
+        bw_l1 = self._bandwidths(l1.detach(), self.ema_l1_q05, self.ema_l1_q95)
+        bw_l2 = self._bandwidths(l2_sq.detach(), self.ema_l2_q05, self.ema_l2_q95)
+
+        k_laplace = torch.exp(-l1[..., None] / bw_l1)
+        k_gaussian = torch.exp(-l2_sq[..., None] / bw_l2)
+        kernels = torch.cat([k_laplace, k_gaussian], dim=-1)
+        return reduce(kernels, dim=-1, mode=reduction)
+```
+
+This slightly improved the performances to `0.131`, though I am not sure this is really significant.
+
 
 Building upon this idea, {{< citet "biggs2023mmd" >}} proposes a fusion mechanism that can be seen as a soft max, 
 that kind of interpolates between taking a mean and a max, hoping to get the stability of the mean with the theoretical advantages of the max.
