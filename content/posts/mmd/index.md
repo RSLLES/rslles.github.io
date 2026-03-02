@@ -390,7 +390,8 @@ class ExponentialKernel(nn.Module):
 Here are the visual results, after $\sim$10,000 steps with a batch size of `1024`:
 ![MMD vanilla](./mmd_default.avif)
 
-To produce quantitative results, we propose to use the [earth mover's distance](https://en.wikipedia.org/wiki/Earth_mover's_distance) (EMD) between the sampled distribution "Results" and the target distribution "Target" as a validation metric.
+To provide a quantitative metric to assess the quality of the results, 
+we propose to use the [earth mover's distance](https://en.wikipedia.org/wiki/Earth_mover's_distance) (EMD) between the sampled distribution "Results" and the target distribution "Target" as a validation metric.
 With the previous distribution, the EMD is `0.168`. 
 
 You may agree with me that the previous results are ... well, not that great.
