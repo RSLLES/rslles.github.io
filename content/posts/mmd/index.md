@@ -51,7 +51,7 @@ and then to use a tool capable of comparing those distributions solely based on 
 This is precisely the goal of the Maximum Mean Discrepancy (MMD) ({{< citep "gretton2012kernel" >}}), which is the topic of today's post.
 
 ## Intuition and a practical example
-The MMD is a technique to compare samples and verify whether they come from the same distribution or not. 
+**The MMD is a technique to compare samples and verify whether they come from the same distribution or not.** 
 Formally, it answers **the two-sample test**, that is a statistical test where the null hypothesis is that the two samples come from the same distribution.
 
 In practice, if you have $m$ samples $\mX = (\vx_1, \dots, \vx_m)$ from one distribution $p$ and $n$ samples $\mY = (\vy_1, \dots, \vy_n)$ from another distribution $q$, then the MMD between $\mX$ and $\mY$ will transcribe how close the distributions $p$ and $q$ are from each other.
@@ -67,10 +67,10 @@ $$
 \end{split}
 $$
 
-The kernel function can be thought of as a "comparison function", that creates a notion of distance between two spaces where it measures how different two objects are.\
-The first two terms use the kernel to compare elements of the same distribution with each other, building a representation of how each distribution reflects with itself.
-In contrast, the last term is a correlation term, that compares the samples from the two distributions.
-All of those terms are equal if (and in expectation, only if) the two distributions $p$ and $q$ are identical.
+The kernel function can be thought of as a similarity function that measures how alike two elements are.
+In the expression of the MMD, the first two terms measure the average self-similarity within each distribution, i.e. how alike samples from the same distribution tend to be.
+The last term is a cross term that measures similarity across the two distributions.
+When $\mX = \mY$, all three terms are equal, and the sum cancels to zero.
 We redirect the curious reader to the excellent course of {{< citet "mairal2022kernel" >}} for additional information about kernel methods for machine learning.
 
 In machine learning, a common usage of MMD is to train **generative models**. 
