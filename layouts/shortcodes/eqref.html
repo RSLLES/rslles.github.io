@@ -1,0 +1,8 @@
+{{- $label := .Get 0 -}}
+{{- $num := index ($.Page.Store.Get "eq_labels") $label -}}
+{{- if $num -}}
+<a href="#{{ $label | urlize }}">Eq.&nbsp;({{ $num }})</a>
+{{- else -}}
+<span style="color:red;font-weight:bold">[? {{ $label }}]</span>
+{{- warnf "Missing equation label: %s in %s" $label $.Page.Title -}}
+{{- end -}}

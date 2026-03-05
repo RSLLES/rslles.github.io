@@ -1,16 +1,35 @@
+{{- $inner := .Inner -}}
+{{- $label := "" -}}
+
+{{- /* Extract \label{...} from display math, assign sequential number, inject \tag{n} */ -}}
+{{- if and (eq .Type "block") (strings.Contains $inner `\label{`) -}}
+  {{- $match := findRE `\\label\{([^}]+)\}` $inner 1 -}}
+  {{- if $match -}}
+    {{- $label = index $match 0 | replaceRE `\\label\{([^}]+)\}` "$1" -}}
+    {{- $inner = replaceRE `\s*\\label\{[^}]+\}` "" $inner -}}
+    {{- $counter := add ($.Page.Store.Get "eq_counter" | default 0) 1 -}}
+    {{- $.Page.Store.Set "eq_counter" $counter -}}
+    {{- $.Page.Store.SetInMap "eq_labels" $label $counter -}}
+    {{- $inner = printf "%s \\tag{%d}" $inner $counter -}}
+  {{- end -}}
+{{- end -}}
+
 {{- $macros := site.Data.math_macros | default (dict) -}}
 {{- $opts := dict
-"output" "htmlAndMathml"
-"displayMode" (eq .Type "block")
-"macros" $macros
+  "output" "htmlAndMathml"
+  "displayMode" (eq .Type "block")
+  "macros" $macros
 -}}
 
-{{- with try (transform.ToMath .Inner $opts) }}
-{{- with .Err }}
-{{- errorf `Unable to render mathematical markup to HTML using the transform.ToMath function.
+{{- if $label -}}<div id="{{ $label | urlize }}" class="eq-anchor">{{- end -}}
+{{- with try (transform.ToMath $inner $opts) }}
+  {{- with .Err }}
+    {{- errorf `Unable to render mathematical markup to HTML using the transform.ToMath function.
 The KaTeX display engine threw the following error: %s: see %s.` . $.Position }}
-{{- else }}
-{{- .Value }}
-{{- $.Page.Store.Set "hasMath" true }}
-{{- end }}
+  {{- else }}
+    {{- .Value }}
+    {{- $.Page.Store.Set "hasMath" true }}
+  {{- end }}
+{{- end -}}
+{{- if $label -}}</div>
 {{- end -}}
