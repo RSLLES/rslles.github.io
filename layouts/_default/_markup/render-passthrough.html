@@ -1,15 +1,16 @@
 {{- $inner := .Inner -}}
 {{- $label := "" -}}
+{{- $match := slice -}}
 
 {{- /* Extract \label{...} from display math, assign sequential number, inject \tag{n} */ -}}
 {{- if and (eq .Type "block") (strings.Contains $inner `\label{`) -}}
-  {{- $match := findRE `\\label\{([^}]+)\}` $inner 1 -}}
+  {{- $match = findRE `\\label\{([^}]*)\}` $inner 1 -}}
   {{- if $match -}}
-    {{- $label = index $match 0 | replaceRE `\\label\{([^}]+)\}` "$1" -}}
-    {{- $inner = replaceRE `\s*\\label\{[^}]+\}` "" $inner -}}
+    {{- $label = index $match 0 | replaceRE `\\label\{([^}]*)\}` "$1" -}}
+    {{- $inner = replaceRE `\s*\\label\{[^}]*\}` "" $inner -}}
     {{- $counter := add ($.Page.Store.Get "eq_counter" | default 0) 1 -}}
     {{- $.Page.Store.Set "eq_counter" $counter -}}
-    {{- $.Page.Store.SetInMap "eq_labels" $label $counter -}}
+    {{- if $label -}}{{- $.Page.Store.SetInMap "eq_labels" $label $counter -}}{{- end -}}
     {{- $inner = printf "%s \\tag{%d}" $inner $counter -}}
   {{- end -}}
 {{- end -}}
@@ -21,7 +22,8 @@
   "macros" $macros
 -}}
 
-{{- if $label -}}<div id="{{ $label | urlize }}" class="eq-anchor">{{- end -}}
+{{- $anchorId := cond (ne $label "") ($label | urlize) (printf "eq-%d" ($.Page.Store.Get "eq_counter")) -}}
+{{- if $match -}}<div id="{{ $anchorId }}" class="eq-anchor">{{- end -}}
 {{- with try (transform.ToMath $inner $opts) }}
   {{- with .Err }}
     {{- errorf `Unable to render mathematical markup to HTML using the transform.ToMath function.
@@ -31,5 +33,5 @@ The KaTeX display engine threw the following error: %s: see %s.` . $.Position }}
     {{- $.Page.Store.Set "hasMath" true }}
   {{- end }}
 {{- end -}}
-{{- if $label -}}</div>
+{{- if $match -}}</div>
 {{- end -}}

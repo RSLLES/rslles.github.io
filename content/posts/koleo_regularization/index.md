@@ -69,7 +69,7 @@ a measure of its information content, and among all distributions, it is the uni
 Shannon attempt to extend the definition of entropy to continuous variables yielded the **differential entropy**, that is just the regular entropy with the sum swapped for an integral.
 Given $\rvx \sim f$, it writes:
 
-$$ h(\rvx) = \E \left[ - \log f(\rvx) \right] = -\int_\sX f(\vx) \log f(\vx)d\vx.$$ 
+$$ h(\rvx) = \E \left[ - \log f(\rvx) \right] = -\int_\gX f(\vx) \log f(\vx)d\vx.$$ 
 
 While differential entropy does not retain all the convenient properties of its original counterpart (it is not always positive, it is not dimensionless), 
 it does conserve one that is of interest to us: **for a fixed support $S$, then among all densities on $S$, the uniform distribution maximized the differential entropy.**
