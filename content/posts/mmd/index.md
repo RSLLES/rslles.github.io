@@ -39,10 +39,18 @@ bib:
     year: 2023
     journal: "Advances in Neural Information Processing Systems (NeurIPS)"
     url: "https://proceedings.neurips.cc/paper_files/paper/2023/file/edd00cead3425393baf13004de993017-Paper-Conference.pdf"
+  - id: "hertrich2023generative"
+    title: "Generative sliced MMD flows with Riesz kernels"
+    author: "Hertrich, Johannes and Wald, Christian and Altekruger, Fabian and Hagemann, Paul"
+    year: 2024
+    journal: "International Conference on Learning Representations (ICLR)"
+    url: "https://arxiv.org/abs/2305.11463"
 ---
 
-Statistics are all about studying the world of distributions. In this context, a common objective is to measure how two distributions compare to each other;
-a question that can be answered using numerous distance functions --- among which are the [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence) and the [Wasserstein distance](https://en.wikipedia.org/wiki/Wasserstein_metric) for instance --- but they generally require direct access to the probability distribution functions (p.d.f).
+Statistics is largely about understanding and reasoning with distributions. 
+In this domain, a common objective is to measure how two distributions compare to each other;
+you can think about the [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence) 
+and all [integral probability metric](https://en.wikipedia.org/wiki/Integral_probability_metric) such as the [Wasserstein distance](https://en.wikipedia.org/wiki/Wasserstein_metric) or the [total variation distance](https://en.wikipedia.org/wiki/Total_variation_distance_of_probability_measures) for instance --- but they generally require direct access to the probability distribution functions (p.d.f).
 
 In contrast, in machine learning and especially when dealing with distributions over high-dimensional spaces, we often only have access to samples of the distribution, and not to the p.d.f themselves.
 Imagine for example a dataset of measures from a phenomenon you want to model.
@@ -57,7 +65,7 @@ Formally, it answers **the two-sample test**, that is a statistical test where t
 In practice, if you have $m$ samples $\mX = (\vx_1, \dots, \vx_m)$ from one distribution $p$ and $n$ samples $\mY = (\vy_1, \dots, \vy_n)$ from another distribution $q$, then the MMD between $\mX$ and $\mY$ will transcribe how close the distributions $p$ and $q$ are from each other.
 
 Let's have a look at the expression of the MMD.
-Given the previous samples $\mX$ and $\mY$ respectively from $p$ and $q$, we also define $k: \sX \times \sX \longmapsto \R$ to be a **positive definite kernel**, i.e. a two variables function that is *symmetric and positive semidefinite* ({{< citep "aronszajn1950theory" >}}).
+Given the previous samples $\mX$ and $\mY$ respectively from $p$ and $q$, we also define $k: \gX \times \gX \longmapsto \R$ to be a **positive definite kernel**, i.e. a two variables function that is *symmetric and positive semidefinite* ({{< citep "aronszajn1950theory" >}}).
 Then the MMD writes:
 $$
 \begin{split}
@@ -86,15 +94,15 @@ Code and discussion around this example is available in the last section of this
 
 
 Let's start with a basic characterisation in statistics.
-Let $\rvx$ be a random variable and $p$ a distribution on a topological space $\sX$.
+Let $\rvx$ be a random variable and $p$ a distribution on a topological space $\gX$.
 The [law of the unconscious statistician](https://en.wikipedia.org/wiki/Law_of_the_unconscious_statistician) (or [*théorème de transfert*](https://www.bibmath.net/dico/index.php?action=affiche&quoi=.%2Ft%2Ftransfert.html) in French) says:
 
-$$\rvx \sim p \Rightarrow \forall h \in \gC(\sX), \E_{\rvx \sim p}[h(\rvx)] = \int_\sX h(\vx) p(\vx) d\vx,$$
+$$\rvx \sim p \Rightarrow \forall h \in \gC(\gX), \E_{\rvx \sim p}[h(\rvx)] = \int_\gX h(\vx) p(\vx) d\vx,$$
 
-where $\gC(\sX)$ is the space of bounded continuous functions with values in $\mathbb{R}$.
+where $\gC(\gX)$ is the space of bounded continuous functions with values in $\mathbb{R}$.
 What is really of interest is that the reverse implication of this property holds ({{< citep "dudley2002real" >}}), providing a characterization of probability measures. 
 If $\rvx \sim p$ and $\rvy \sim q$, then:
-$$p=q \Leftrightarrow  \forall h \in \gC(\sX), \E_{\rvx \sim p}[h(\rvx)] = \mathbb E_{\rvy \sim q}[h(\rvy)].$$
+$$p=q \Leftrightarrow  \forall h \in \gC(\gX), \E_{\rvx \sim p}[h(\rvx)] = \mathbb E_{\rvy \sim q}[h(\rvy)].$$
 
 Using this characterization, we can see that if $\rvx$ and $\rvy$ do not follow the same distribution, then there must exist a function $h$ such that the expected values of $h(\rvx)$ and $h(\rvy)$ are different.
 Naturally, we expect that the more different $\rvx$ and $\rvy$, the easier it should be to find a function $h$ that exacerbates their difference.
@@ -108,16 +116,16 @@ But this apparently complex optimization problem has a closed form for a very sp
 
 Let's pick a RKHS $\gH$.
 By the [Riesz representation theorem](https://en.wikipedia.org/wiki/Riesz_representation_theorem),
-we denote $\phi: \sX \longmapsto \gH$ the feature mapping of $\gH$ and the kernel $k(\vx, \vy) = \dotprod{\phi(\vx)}{\phi(\vy)}_\gH$ for $\vx, \vy \in \sX^2$.
+we denote $\phi: \gX \longmapsto \gH$ the feature mapping of $\gH$ and the kernel $k(\vx, \vy) = \dotprod{\phi(\vx)}{\phi(\vy)}_\gH$ for $\vx, \vy \in \gX^2$.
 
 Let $h$ be a function of $\gH$.
-For all $\vx \in \sX$, we have $h(\vx) = \dotprod{\phi(\vx)}{h}_\gH$.
+For all $\vx \in \gX$, we have $h(\vx) = \dotprod{\phi(\vx)}{h}_\gH$.
 We can use this property to derive a formula for $\E_{\rvx \sim p}[h(\rvx)]$:
 
 $$
 \begin{split}
-\E_{\rvx \sim p} (h(\rvx)) &= \int_{\vx \in \sX}{h(\vx)p(\vx)dx} = \int_{\vx \in \sX}{\dotprod{\phi(\vx)}{h}_\gH p(\vx)dx} \\
-&=  \dotprod{\int_{\vx \in \sX} \phi(\vx) p(\vx)dx}{h}_\gH = \dotprod{\mu_p}{h}_\gH,
+\E_{\rvx \sim p} (h(\rvx)) &= \int_{\vx \in \gX}{h(\vx)p(\vx)dx} = \int_{\vx \in \gX}{\dotprod{\phi(\vx)}{h}_\gH p(\vx)dx} \\
+&=  \dotprod{\int_{\vx \in \gX} \phi(\vx) p(\vx)dx}{h}_\gH = \dotprod{\mu_p}{h}_\gH,
 \end{split}
 $$
 
@@ -149,7 +157,7 @@ $$
 The last step is to find a way to compute this quantity.
 $\mu_p$ and $\mu_q$ are elements of $\gH$, i.e. functions, and are intractable as such.
 The whole philosophy of kernel methods in general is to use these high-level objects
-to prove some theory, but in the end to get back to simple expressions directly involving evaluation of the kernel $k: \sX \times \sX \longmapsto \R$, which is tractable.
+to prove some theory, but in the end to get back to simple expressions directly involving evaluation of the kernel $k: \gX \times \gX \longmapsto \R$, which is tractable.
 
 We can develop the expression of the MMD squared:
 
@@ -532,6 +540,74 @@ def mmd_max(x: Tensor, y: Tensor, kernel: nn.Module, reduction: str) -> Tensor:
 
 With this new strategy, we have reached a validation metric of `0.133`.
 ![MMD max](./mmd_max.avif)
+
+MMD complexity is $\gO(d(m+n)^2)$ where $m$ and $n$ are the number of samples from each distribution and $d$ the dimension of the data ($d=2$ with our toy example).
+Hence, in scenarios where $d \gg 1$, computing the MMD can become compute intensive.
+A natural idea is then to **project the data into a lower-dimensional subspace** --- similarly to sliced Wasserstein distance --- with an orthogonal matrix.
+For this, you can either use a random projection matrix, or even better, find one that maximizes the MMD.
+
+Here is a very hacky (and completely sub-optimal) implementation of this idea: search for the projection that maximizes the MMD.
+In practice, instead of a pass-through trick that computes the loss two times, you should add a separate optimizer for `W`.
+
+```python
+class MaxSliceKernel(nn.Module):
+    def __init__(self, input_dim: int, proj_dim: int, base_kernel: nn.Module):
+        super().__init__()
+        self.base_kernel = base_kernel
+        W = nn.Linear(input_dim, proj_dim, bias=False)
+        self.proj = torch.nn.utils.parametrizations.spectral_norm(W)
+
+    def forward(self, z1: Tensor, z2: Tensor, reduction: str = "mean") -> Tensor:
+        W = self.proj.weight
+        e1 = F.linear(z1, W.detach())
+        e2 = F.linear(z2, W.detach())
+        loss = self.base_kernel(e1, e2, reduction=reduction)
+        e1_k = F.linear(z1.detach(), W)
+        e2_k = F.linear(z2.detach(), W)
+        loss_k = self.base_kernel(e1_k, e2_k, reduction=reduction)
+        return loss + (loss_k.detach() - loss_k)
+```
+
+If we pick `proj_dim = input_dim = 2`, we reach an EMD of `0.124`.
+
+![MMD max](./mmd_maxslice.avif)
+
+However, if we pick `proj_dim = 1`, then the validation metric is `1.11`: it does not work at all.
+This makes sense here: the target distribution is circular, and no single 1D projection can capture it.
+If we want to rely on cheap 1D projections, we may need many of them:
+
+```python
+class SliceKernel(nn.Module):
+    def __init__(
+        self,
+        input_dim: int,
+        n_proj: int,
+        base_kernel: nn.Module = ExponentialKernel(p=1),
+    ):
+        super().__init__()
+        self.input_dim = input_dim
+        self.n_proj = n_proj
+        self.base_kernel = base_kernel
+
+    def _random_proj(self, device) -> Tensor:
+        u = torch.randn((self.input_dim, self.n_proj), device=device)
+        return F.normalize(u, dim=0, p=2)
+
+    def forward(self, z1: Tensor, z2: Tensor, reduction: str = "mean") -> Tensor:  # noqa: D102
+        B, N1, _ = z1.shape
+        B, N2, _ = z2.shape
+        u = self._random_proj(device=z1.device)
+        e1 = (z1 @ u).transpose(1, 2).reshape(B * self.n_proj, N1, 1)
+        e2 = (z2 @ u).transpose(1, 2).reshape(B * self.n_proj, N2, 1)
+        kernels = self.base_kernel(e1, e2, reduction="none")
+        kernels = kernels.reshape(B, self.n_proj, N1, N2, -1).mean(dim=1)
+        return reduce(kernels, dim=-1, mode=reduction)
+```
+
+Note that this approach offers some guarantees when paired with the Riesz kernel: $K(\vx,\vy) = - \| \vx - \vy \|_2^r$ with $r \in (0,2)$.
+{{< citet "hertrich2023generative" >}} proved that using random projections with a Riesz kernel is equivalent to the complete MMD with this kernel,
+which is neat for high-dimensional problems.
+Furthermore, in the special case of the Riesz kernel with `r=1`, a clever sorting trick reduces the MMD complexity from $\gO((n_1 + n_2)^2)$ to $\gO((n_1 + n_2) \log (n_1 + n_2))$, making it blazingly fast for a large number of high-dimensional objects.
 
 {{< citet "schrab2023mmd" >}} also recommend to use both Laplace and RBF kernels with their bandwidths selection strategy:
 ```python
