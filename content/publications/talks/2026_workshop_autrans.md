@@ -1,7 +1,7 @@
 ---
 title: "The mathematics of colors"
 date: "2026-03-23"
-context: "International workshop, Thoth team, Inria, Autrans-Méaudre en Vercors, France"
+context: "Thoth team (Inria) international workshop, Autrans-Méaudre en Vercors, France"
 searchHidden: true
 hiddenInHomeList: true
 link: "https://romainseailles.fr/slidedeck_the_mathematics_of_colors/"
