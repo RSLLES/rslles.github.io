@@ -428,5 +428,5 @@
 "\\Tr": "\\operatorname{Tr}"
 "\\diag": "\\operatorname{diag}"
 "\\dotprod": "\\left\\langle #1 \\,\\middle|\\, #2 \\right\\rangle"
-"\\frobenius": "\\dotprod_\\mathcal{F}"
+"\\frobenius": "\\left\\langle #1 \\,\\middle|\\, #2 \\right\\rangle_{\\mathcal{F}}"
 "\\cst": "\\text{cst}"
