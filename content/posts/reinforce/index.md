@@ -26,13 +26,24 @@ bib:
 Nowadays, most supervised deep learning frameworks relie on first order optimization methods, which require the loss function to be differentiable.
 But this is not always the case. 
 While most functions are differentiable almost everywhere, a common blocking behavior is **sampling**.
-Think of policy optimization for example, where you search an optimal strategy over a set of discrete action. If you simulate a discrete action, something as simple as a binary decision --- that can't be modeled by a bernoulli trial --- is not differentiable and breaks your framework.
+Think of policy optimization for example, where you search an optimal strategy over a set of discrete action: something as simple as a binary decision --- that can be modeled by a bernoulli trial --- is not differentiable and breaks the default deep learning framework.
 
-Hence in today's post, I would like to tackle a mathematical indentity called REINFORCE ({{< citep "williams1992simple" >}}) that precisely allows to optimize what you can't differentiate by leveraging a sampling process.
+In today's post, I would like to tackle a mathematical indentity called REINFORCE ({{< citep "williams1992simple" >}}) that precisely allows to optimize what you can't differentiate by leveraging a sampling process.
 It is the secret engine behind numerous modern tools --- PPO ({{< citep "schulman2017proximal" >}}) or GRPO ({{< citep "shao2024deepseekmath" >}}) for example --- and I think it should be in the toolkit of every machine learning researcher.
 
 ## An intuitive explanation
-So a way of optimizing could be by *random* search: we sample some values from a prior distribution, we evaluate how good they are, and then we compare  
+Let's start with a simple motivation: how de we optimize an non differentiable loss function ? For example, imagine we have a loss function that is defined only onver a discrete.
+
+While this toy example is just an illustration, you can think of more complex scenarios: what if you are playing chess for example ? You only have a finite set of actions, $\{ \text{Move piece } X \text{ to square } Y, \forall X, \forall Y \in \{\text{accessible squares to } X\}  \}$, and a hypothetical loss function would give you a score for every board configuration.
+
+To optimize this function, instead of searching over the space of input values $X$. We surroguate $x$ for a random variable $\rx$ that follows a parametric distribution $p_\theta$.
+For a binary decision, you can use a Bernoulli distribution with probability $\theta$, for a distribution over a finite set, why not a categorical distribution.
+The choice is yours.
+And instead of optimizing for $x$, we known search for the best $theta$: this may be better, as $p_\theta$ is differentiable with respect to $\theta$ now.
+
+So let's sample some random $x$ distributed along $p_\theta$ and have a look at their value. As we known $p_\theta$, we can also track it's value in this table, and also the value of $\nabla p_\theta$, that indicates how $p_\theta$ varies to change of $\theta$:
+
+As you can see, we 
 
 ## The maths
 
