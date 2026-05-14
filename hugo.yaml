@@ -5,6 +5,7 @@ theme: ["PaperMod"]
 
 params:
   author: Romain Séailles
+  mainSections: ["posts"]
 
   # Main page options
   homeInfoParams:
