@@ -1,0 +1,7 @@
+/* style of the biobliography along post */
+.bib-entry {
+    margin-bottom: 0.5em;
+    padding-left: 1em;
+    text-indent: -1em;
+    line-height: 1.5;
+}
