@@ -15,6 +15,12 @@ bib:
     year: 2002
     journal: "Cambridge University Press"
     url: "https://assets.cambridge.org/97805218/09726/sample/9780521809726ws.pdf"
+  - id: "rahimi2007random"
+    title: "Random features for large-scale kernel machines"
+    author: "Rahimi, Ali and Recht, Benjamin"
+    journal: "Advances in Neural Information Processing Systems (NeurIPS)"
+    year: 2007
+    url: "https://proceedings.neurips.cc/paper_files/paper/2007/file/013a006f03dbc5392effeb8f18fda755-Paper.pdf"
   - id: "gretton2012kernel"
     title: "A Kernel Two-Sample Test"
     author: "Gretton, Arthur and Borgwardt, Karsten M and Rasch, Malte J and Scholkopf, Bernhard and Smola, Alexander"
@@ -45,6 +51,18 @@ bib:
     year: 2024
     journal: "International Conference on Learning Representations (ICLR)"
     url: "https://arxiv.org/abs/2305.11463"
+  - id: "mukherjee2025minimax"
+    title: "Minimax Optimal Kernel Two-Sample Tests with Random Features"
+    author: "Mukherjee, Soumya and Sriperumbudur, Bharath K"
+    journal: "arXiv preprint"
+    year: 2025
+    url: "https://arxiv.org/abs/2502.20755"
+  - id: "balestriero2025lejepa"
+    title: "Lejepa: Provable and scalable self-supervised learning without the heuristics"
+    author: "Balestriero, Randall and LeCun, Yann"
+    journal: "arXiv preprint"
+    year: 2025
+    url: "https://arxiv.org/abs/2511.08544"
 ---
 
 Statistics is largely about understanding and reasoning with distributions. 
@@ -78,7 +96,7 @@ $$
 The kernel function can be thought of as a similarity function that measures how alike two elements are.
 In the expression of the MMD, the first two terms measure the average self-similarity within each distribution, i.e. how alike samples from the same distribution tend to be.
 The last term is a cross term that measures similarity across the two distributions.
-When $\mX = \mY$, all three terms cancels out and the MMD is null.
+When $\mX = \mY$, all three terms cancel out and the MMD is null.
 We redirect the curious reader to the excellent course of {{< citet "mairal2022kernel" >}} for additional information about kernel methods for machine learning.
 
 In machine learning, a common usage of MMD is to train **generative models**. 
@@ -220,22 +238,27 @@ $$
 
 For $m$ and $n$ sufficiently large, this should not impact the MMD too much.
 
-## Linear MMD
+## Reduce the complexity
 
 The previous derived expression is not suited for online usage.
 Indeed, for any new point added to the dataset, we need to compute its application through the kernel against all previous points,
 meaning we need to keep the entire history, and have a quadratic scaling with respect to the number of samples.
+Below are two methods to downscale the complexity to $\gO(n)$: 
+the **linear MMD** approximation, which reduces complexity at the cost of a bigger variance,
+and a special identity with **stationary kernels**. 
+
+### Linear MMD
 
 If we look at the previous formula, we see that **the minimum number of samples required by the MMD is 2 from each distribution**.
 Given only $\vx_1, \vx_2$ from $p$ and $\vy_1, \vy_2$ from $q$, we can approximate
 $\E_{\rvx_1 \sim p, \rvx_2 \sim p}[k(\rvx_1, \rvx_2)]$ by $k(\vx_1, \vx_2)$,
 $\E_{\rvy_1 \sim q, \rvy_2 \sim q}[k(\rvy_1, \rvy_2)]$ by $k(\vy_1, \vy_2)$,
-and $\E_{\rvx \sim p, \rvy \sim q}[k(\rvx, \rvy)]$ by $\frac{1}{2}(k(\vx_1, \vy_1) + k(\vx_2, \vy_2))$.
+and $\E_{\rvx \sim p, \rvy \sim q}[k(\rvx, \rvy)]$ by $\frac{1}{2}(k(\vx_1, \vy_2) + k(\vx_2, \vy_1))$.
 This yields the lightest possible estimator for the squared MMD, 
 that we denote as $\hat{\operatorname{MMD}}^2_2$ and is:
 
 $$
-\hat{\operatorname{MMD}}^2_2[\vx_1, \vx_2, \vy_1, \vy_2] = k(\vx_1, \vx_2) - k(\vx_1, \vy_1) - k(\vx_2, \vy_2) + k(\vy_1, \vy_2).
+\hat{\operatorname{MMD}}^2_2[\vx_1, \vx_2, \vy_1, \vy_2] = k(\vx_1, \vx_2) + k(\vy_1, \vy_2) - k(\vx_1, \vy_2) - k(\vx_2, \vy_1).
 $$
 
 This estimate is of course highly noisy --- being based on two samples --- 
@@ -246,8 +269,8 @@ Assuming we have $2n$ samples $(\vx_1, ..., \vx_{2n})$ from $p$ and also $2n$ sa
 $$
 \begin{split}
 \hat{\operatorname{MMD}}_\text{linear}^2[\mX, \mY] 
-&= \frac{1}{n}\sum_{i=1}^n \hat{\operatorname{MMD}}^2_2[\vx_{2i}, \vx_{2i+1}, \vy_{2i}, \vy_{2i+1}] \\
-&= \frac{1}{n}\sum_{i=1}^n \left[ k(\vx_{2i}, \vx_{2i+1}) + k(\vy_{2i}, \vy_{2i+1}) - k(\vx_{2i}, \vy_{2i+1}) - k(\vx_{2i+1}, \vy_{2i}) \right].
+&= \frac{1}{n}\sum_{i=1}^n \hat{\operatorname{MMD}}^2_2[\vx_{2i-1}, \vx_{2i}, \vy_{2i-1}, \vy_{2i}] \\
+&= \frac{1}{n}\sum_{i=1}^n \left[ k(\vx_{2i-1}, \vx_{2i}) + k(\vy_{2i-1}, \vy_{2i}) - k(\vx_{2i-1}, \vy_{2i}) - k(\vx_{2i}, \vy_{2i-1}) \right].
 \end{split}
 $$
 
@@ -260,6 +283,76 @@ $$
 \hat{\operatorname{MMD}}_{b\text{-linear}}^2[\mX, \mY] 
 = \frac{1}{n}\sum_{i=1}^n \hat{\operatorname{MMD}}^2_{b}[(\vx_{ib+1}, \dots, \vx_{(i+1)b}), (\vy_{ib+1}, \dots, \vy_{(i+1)b})] \\
 $$
+
+### Simplification for stationary kernels
+
+A kernel $k(\vx, \vy)$ is stationary if it depends only on the difference $\vu = \vx - \vy$, i.e. $k(\vx, \vy) = \psi(\vx - \vy)$.
+Among others, it includes the radial basis function kernel (RBF), $k_\text{RBF}(\vx, \vy) = \exp \left(- \frac{1}{2} ||\vx - \vy ||_2^2 / \sigma^2 \right)$ and the Laplace kernel, $k_\text{L}(\vx, \vy) = \exp \left(- \gamma ||\vx - \vy ||_1 \right)$.
+
+If you are familiar with the theory of linear shift-invariant systems, you may see where this is going.
+Because these kernels are translation invariant, **they are convolution kernels**, and then it may be a good idea to look at their Fourier transform.
+
+And indeed, a key result is [Bochner's theorem](https://en.wikipedia.org/wiki/Bochner's_theorem): an stationary kernel $\psi$ is s.p.d iff $\psi$ is the Fourier transform of a non negative measure spectral measure $\nu$:
+
+$$k(\vx, \vy) = \psi (\vx - \vy) = \int_{\R^d} \exp \left( i \vw^T (\vx - \vy) \right) \nu(\vw) d\vw $$
+
+Why is it convenient ? Well, this last integral is nothing more than a scalar product:
+
+$$ 
+\begin{split}
+k(\vx, \vy) &= \int_{\R^d} \exp \left( i \vw^T (\vx - \vy) \right) \nu(\vw) d\vw \\
+&= \int_{\R^d} \exp \left( i \vw^T \vx \right) \overline{\exp \left(i \vw^T \vy \right)} \nu(\vw) d\vw \\
+&= \dotprod{\phi(\vx)}{\phi(\vy)}_\gH,
+\end{split}
+$$
+
+where the feature map $\phi(\vx)$ is a function from $\R^d$ to $\sC$ such that $\phi(\vx): \vw \longmapsto e^{i \vw^T \vx}$,
+and the dot product $\dotprod{.}{.}_\gH$ is the canonical dot product of two functions $a$ and $b$ with values in $\sC$ and for a measure $\nu$: $\dotprod{a}{b}_\gH = \int_{\R^d} a(\vw) \overline{b(\vw)} \nu(\vw) d\vw$.
+
+Hence, with Bochner's theorem, we have found the analytic expression of the decomposition of the kernel according to the Riesz representation theorem.
+This is convenient: we can now compute each feature vector independently, e.g. over $p$:
+
+$$ \mu_p(\vw) = \int_{\vx \in \gX} [\phi(\vx)](\vw) p(\vx)d\vx 
+=  \int_{\vx \in \gX} e^{i \vw^T \vx} p(\vx)d\vx
+= \E_{\vx \sim p} \left[ e^{i \vw^T \vx} \right].
+$$
+
+For readers familiar with Fourier analysis, this quantity is precisely the [characteristic function](https://en.wikipedia.org/wiki/Characteristic_function_(probability_theory)) of $p$, evaluated at $\vw$.
+In other words, **for a stationary kernel, the feature map will always be the characteristic function of the random variable.**
+
+Finally, given that we choose a normalized kernel, $\nu$ will be a probability measure, and thus we can re-write the MMD as an expectation:
+
+$$ \begin{split}
+\operatorname{MMD}^2(\gH, p, q) &= ||\mu_p - \mu_q ||_\gH^2 
+= \int_{\R^d} | \mu_p(\vw) - \mu_q(\vw) |^2 \; \nu(\vw) d\vw \\ 
+&= \E_{\vw \sim \nu} \left[ | \mu_p(\vw) - \mu_q(\vw) |^2 \right].
+\end{split}$$
+
+TLDR, **the specific structure of the kernel allows to directly compute the distribution embeddings instead of relying on the developed form of the MMD**.
+And because all elements are expectations, we can approximate them using Monte-Carlo sums !
+
+The approximation by MC sums is exactly the idea of Random Fourier Features ({{< citep "rahimi2007random" >}}) applied to the MMD (RFF-MMD) ({{< citep "mukherjee2025minimax" >}}):
+
+$$\hat{\operatorname{MMD}}_\text{RFF}^2(X, Y)= \frac{1}{r} \sum_{k=1}^r |\hat \mu_p^{(k)} - \hat \mu_q^{(k)}|^2
+\; \text{where} \; 
+\begin{cases}
+\vw_1, \dots, \vw_r \overset{\text{i.i.d}}{\sim} \nu &,\\
+\hat \mu_p^{(k)} = \frac{1}{m}\sum_{j=1}^m e^{i \vw_k^T \vx_j} &,\\
+\hat \mu_q^{(k)} = \frac{1}{n}\sum_{j=1}^n e^{i \vw_k^T \vy_j} &.\\
+\end{cases} $$
+
+As you can see, there is no need to compute any $n \times m$ matrix: we have effectively reduced the complexity to $\gO(n)$ (assuming $m=n$).
+
+This idea has been explored in numerous works: and {{< citet "balestriero2025lejepa" >}} use this algorithm to train the latest JEPA at the time of writing. 
+
+Finally, here is a table of the distribution $\nu$ for the two most popular stationary kernels:
+
+
+| Kernel  | Formula                                   | Probability dist. $\nu(\vw)$                                            | Notes                                |
+| :------ | :---------------------------------------- | :---------------------------------------------------------------------- | ------------------------------------ |
+| RBF     | $e^{-\frac{1}{2\sigma^2}\|\vx-\vy\|_2^2}$ | $\vw \sim \mathcal{N}(\mathbf{0},\, \sigma^{-2} I_d)$                   | Isotropic normal with std $1/\sigma$ |
+| Laplace | $e^{-\gamma\|\vx-\vy\|_1}$                | $\vw = (w_1, \dots, w_d)$ where $w_j \sim \mathrm{Cauchy}(0,\, \gamma)$ | Each component of $\vw$ is i.i.d     |
+
 
 ## Example usage
 
@@ -405,11 +498,11 @@ With the previous distribution, the EMD is `0.168`.
 You may agree with me that the previous results are ... well, not that great.
 This is because MMD is highly sensitive to the kernel you pick !
 Here, while the laplace kernel is usually a safe bet, picking a simple median estimate for the bandwidth is not precise enough.
-Therefore, the next section is about the latest badnwitch selection methods I could find at the time of writting to pick great kernerls.
+Therefore, the next section is about the latest bandwidth selection methods I could find at the time of writting to pick great kernerls.
 
 ## Kernel selection methods
 The performance of the MMD varies highly depending on the choice of the kernel.
-While the Gaussian kernel --- also known as radial basis function kernel (RBF) --- is almost ubiquotous with the Laplace kernel, selecting the correct sigma --- also known as the bandwidth --- is critical.
+While the Gaussian kernel --- also known as radial basis function kernel (RBF) --- is almost ubiquitous with the Laplace kernel, selecting the correct sigma --- also known as the bandwidth --- is critical.
 
 First, on bandwidth selection. Better than the median, {{< citet "schrab2023mmd" >}}
 recommend to take 10 different bandwidths uniformly spaced between half the 5th-percentile and twice the 95th-percentile values.
@@ -446,7 +539,7 @@ class ExponentialKernel(nn.Module):
 Here are the results with this new kernel, with a new best scoring validation metric of `0.164`:
 ![MMD mean](./mmd_mean.avif)
 
-You may notive that this code re-computes the percentiles for each new batch.
+You may notice that this code re-computes the percentiles for each new batch.
 A natural idea to leverage previously computed values is to use an exponential moving average, which will build smoother and more robust estimates: 
 
 ```python
@@ -521,7 +614,7 @@ This new estimation technique brings the validation EMD to `0.152`.
 
 In the previous derivation, the MMD can be defined as a supremum over functions $h$ in $\gH'$.
 Therefore, instead of a mean, we could compute the MMD for all these kernels and at the last moment use the one that provides the highest MMD value,
-aligning kernel selection with the MMD philosophie.
+aligning kernel selection with the MMD philosophy.
 We refer to this strategy as `mmd_max`, and it can be implemented with the following code:
 
 ```python
@@ -542,7 +635,84 @@ With this new strategy, we have reached a validation metric of `0.133`.
 ![MMD max](./mmd_max.avif)
 
 MMD complexity is $\gO(d(m+n)^2)$ where $m$ and $n$ are the number of samples from each distribution and $d$ the dimension of the data ($d=2$ with our toy example).
-Hence, in scenarios where $d \gg 1$, computing the MMD can become compute intensive.
+As explained before, with stationary kernels, we can reduce the complexity to $\gO(dmr+dnr)$ by introducing $r$ samples from the probability distribution associated with the kernel through Bochner's theorem.
+For a RBF kernel, it is an isotropic normal distribution, hence we can play with the following code:
+
+```python
+def rff_mmd(
+    x: Tensor, y: Tensor, dist: nn.Module, n_features: int, reduction: str
+) -> Tensor:
+    if x.ndim != 3 or y.ndim != 3:
+        raise ValueError(f"Expected 3D tensors [B, N, D], got {x.shape},{y.shape}.")
+    if x.size(0) != y.size(0) or x.size(-1) != y.size(-1):
+        raise ValueError(f"Batch or feature dim size mismatch: {x.shape} vs {y.shape}.")
+    w = dist(x, y, n_features=n_features)
+    phase_x = torch.einsum("bnd,rdk->bnrk", x, w)
+    phase_y = torch.einsum("bnd,rdk->bnrk", y, w)
+    mu_x = torch.exp(1j * phase_x).mean(dim=1)
+    mu_y = torch.exp(1j * phase_y).mean(dim=1)
+    mmd_rff = (mu_x - mu_y).abs().square().mean(dim=1)
+    mmd_rff = mmd_rff.mean(dim=1)
+    return reduce(mmd_rff, dim=0, mode=reduction)
+
+class NormalDistribution(nn.Module):
+    """Normal sampler with multi-bandwidth scaling for RFF features.
+
+    Bandwidths follow the same quantile-EMA recipe as ``ExponentialKernel``,
+    but the pairwise distances are estimated on a random subsample of size
+    ``n_subsample`` per side instead of the full N x N matrix.
+    """
+
+    uniform_grid: Tensor
+    quantiles: Tensor
+
+    def __init__(
+        self,
+        n_kernels: int = 5,
+        n_subsample: int = 128,
+        ema_lambd: float = 1e-3,
+        eps: float = 1e-9,
+    ):
+        super().__init__()
+        self.n_subsample = n_subsample
+        self.eps = eps
+        self.register_buffer("uniform_grid", torch.linspace(0.0, 1.0, n_kernels))
+        self.register_buffer("quantiles", torch.tensor([0.05, 0.95]))
+        self.ema_q05 = ExpMovingAverage(ema_lambd)
+        self.ema_q95 = ExpMovingAverage(ema_lambd)
+
+    def _subsample(self, z: Tensor) -> Tensor:
+        N = z.size(-2)
+        n = min(self.n_subsample, N)
+        idx = torch.randperm(N, device=z.device)[:n]
+        return z.index_select(-2, idx)
+
+    @torch.no_grad
+    def compute_bandwidths(self, z1: Tensor, z2: Tensor) -> Tensor:
+        """Interpolate bandwidths between 0.5*q05 and 2.0*q95 on subsampled dists."""
+        z1_sub = self._subsample(z1)
+        z2_sub = self._subsample(z2)
+        dists = torch.cdist(z1_sub, z2_sub, p=2.0)
+        dists_no_zeros = torch.where(dists > self.eps, dists, float("nan"))
+        q05, q95 = torch.nanquantile(dists_no_zeros, self.quantiles)
+        q05, q95 = self.ema_q05(q05), self.ema_q95(q95)
+        low, high = 0.5 * q05, 2.0 * q95
+        return (high - low) * self.uniform_grid + low
+
+    def forward(self, z1: Tensor, z2: Tensor, n_features: int) -> Tensor:
+        """Sample RFF frequencies of shape ``[n_features, D, n_kernels]``."""
+        D = z1.size(-1)
+        bandwidths = self.compute_bandwidths(z1, z2)
+        w = torch.randn(
+            n_features, D, bandwidths.numel(), device=z1.device, dtype=z1.dtype
+        )
+        return w / bandwidths
+```
+
+With this approach, we reach a validation metric of `0.153`, all with a linear approximation.
+
+
+Alternatively, in scenarios where $d \gg 1$, computing the MMD can also become compute-intensive.
 A natural idea is then to **project the data into a lower-dimensional subspace** --- similarly to sliced Wasserstein distance --- with an orthogonal matrix.
 For this, you can either use a random projection matrix, or even better, find one that maximizes the MMD.
 
