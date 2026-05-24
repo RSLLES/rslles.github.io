@@ -642,6 +642,7 @@ For a RBF kernel, it is an isotropic normal distribution, hence we can play with
 def rff_mmd(
     x: Tensor, y: Tensor, dist: nn.Module, n_features: int, reduction: str
 ) -> Tensor:
+    """Implement RFF MDD."""
     if x.ndim != 3 or y.ndim != 3:
         raise ValueError(f"Expected 3D tensors [B, N, D], got {x.shape},{y.shape}.")
     if x.size(0) != y.size(0) or x.size(-1) != y.size(-1):
@@ -652,7 +653,7 @@ def rff_mmd(
     mu_x = torch.exp(1j * phase_x).mean(dim=1)
     mu_y = torch.exp(1j * phase_y).mean(dim=1)
     mmd_rff = (mu_x - mu_y).abs().square().mean(dim=1)
-    mmd_rff = mmd_rff.mean(dim=1)
+    mmd_rff = mmd_rff.amax(dim=1)
     return reduce(mmd_rff, dim=0, mode=reduction)
 
 class NormalDistribution(nn.Module):
@@ -676,6 +677,7 @@ class NormalDistribution(nn.Module):
         super().__init__()
         self.n_subsample = n_subsample
         self.eps = eps
+        self.n_kernels = n_kernels
         self.register_buffer("uniform_grid", torch.linspace(0.0, 1.0, n_kernels))
         self.register_buffer("quantiles", torch.tensor([0.05, 0.95]))
         self.ema_q05 = ExpMovingAverage(ema_lambd)
@@ -703,13 +705,11 @@ class NormalDistribution(nn.Module):
         """Sample RFF frequencies of shape ``[n_features, D, n_kernels]``."""
         D = z1.size(-1)
         bandwidths = self.compute_bandwidths(z1, z2)
-        w = torch.randn(
-            n_features, D, bandwidths.numel(), device=z1.device, dtype=z1.dtype
-        )
+        w = torch.randn(n_features, D, 1, device=z1.device, dtype=z1.dtype)
         return w / bandwidths
 ```
 
-With this approach, we reach a validation metric of `0.153`, all with a linear approximation.
+With this approach, we reach a validation metric of `0.128`, all with a linear approximation.
 
 
 Alternatively, in scenarios where $d \gg 1$, computing the MMD can also become compute-intensive.
