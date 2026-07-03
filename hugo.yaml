@@ -3,6 +3,8 @@ languageCode: en-us
 title: Romain Séailles
 theme: ["PaperMod"]
 
+enableGitInfo: true
+
 params:
   author: Romain Séailles
   mainSections: ["posts"]
