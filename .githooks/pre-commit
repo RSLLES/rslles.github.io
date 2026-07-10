@@ -27,6 +27,11 @@ while IFS= read -r FILE; do
 
     [[ "$IS_IMAGE" -eq 0 ]] && continue
 
+    # Allow explicit exemptions via .gitattributes (image-format-exempt)
+    if git check-attr image-format-exempt -- "$FILE" | grep -q ': set$'; then
+        continue
+    fi
+
     # Check extension is allowed
     IS_ALLOWED=0
     for e in $ALLOWED_EXTS; do

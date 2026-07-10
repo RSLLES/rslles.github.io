@@ -1,0 +1,5 @@
+# Images listed here are exempt from the AVIF/WebP-only pre-commit check
+# (see .githooks/pre-commit) because their original format is smaller than
+# any AVIF/WebP conversion. Mark a path with the "image-format-exempt" attribute
+# to allow it through as-is.
+content/posts/self_supervised/intro.gif image-format-exempt
