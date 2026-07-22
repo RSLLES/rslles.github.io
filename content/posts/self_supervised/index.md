@@ -109,15 +109,15 @@ bib:
 
 A large part of deep learning consists of training highly parameterized neural networks to map input data to quantities of interest.
 For instance, image classification assigns class probability to images, inverse problems estimate initial quantities from corrupted measurements, representation learning attaches relevant embeddings to objects, etc ...
-The standard framework in the field involves 1) pick a good class of parametric functions -- i.e. efficient model architectures --, 2) design an objective, a.k.a. a loss function, and 3) minimize it with your favorite optimization algorithm.
+The standard framework in the field involves 1) picking a good class of parametric functions -- i.e. efficient model architectures --, 2) designing an objective, a.k.a. a loss function, and 3) minimizing it with your favorite optimization algorithm.
 
 This blogpost develops my insights about step 2), especially in the self-supervised setup.
 Indeed, while loss functions for supervised training are generally straightforward, 
 designing objectives for self-supervised learning that maximize training efficiency remains a complicated task. 
-Hence, in this blogpost, I would like to explore **how can we design good learning signals for a given task in a self-supervised setting?**
+Hence, in this blogpost, I would like to explore **how we can design good learning signals for a given task in a self-supervised setting?**
 
 TL;DR, my intuition is **that loss functions for self-supervised learning come from necessary and, hopefully, sufficient conditions the answer must satisfy**, rather than directly from the clean answer itself as in supervised learning. 
-Interestingly, in [logic reasoning]((https://en.wikipedia.org/wiki/Logic)), definitions by conditions vs the complete list of answers are respectfully refered to as intensional vs extensional definitions.
+Interestingly, in [logical reasoning](https://en.wikipedia.org/wiki/Logic), definitions by conditions vs the complete list of answers are respectively referred to as intensional vs extensional definitions.
 This post starts by unpacking that analogy --- intension vs extension --- then deciphers several self-supervised approaches through this lens, and concludes with practical advice and recipes to apply them in our own projects.
 
 {{< figure src="./intro.gif" attr="*Mutts* by Patrick McDonnell, 2026." attrlink="https://mutts.com/products/strip-012621?variant=41141367603357" align="center" >}}
@@ -135,15 +135,15 @@ $$ \{ x \in \R : x^2 - 3x + 2 = 0 \} = \{1, 2\}.$$
 
 In [logical reasoning](https://en.wikipedia.org/wiki/Logic), the left set is known as an **intensional definition**: elements are characterized by a common property they satisfy --- here, a quadratic equation.
 By contrast, the right set is the **extensional definition**, which is the list of all elements belonging to the set.
-In all rigour, when we say "solving an equation" in maths, we means turning an intensional definition into an extensional one.
+In all rigour, when we say "solving an equation" in maths, we mean turning an intensional definition into an extensional one.
 
-Interestingly, note that while the extension form is unique, there may be multiple intensional definitions:
+Interestingly, note that while the extensional form is unique, there may be multiple intensional definitions:
 
 $$ 
 \begin{aligned}
 \{1, 2\} &= \{ x \in \R : x^2 - 3x + 2 = 0 \} & \quad \text{// roots of a quadratic} \\
-&= \{ x \in \R : 2^x=2x \} & \quad \text{// what to say here?} \\
 &= \{ n \in \N : n!=n \} & \quad \text{// fixed points of factorial} \\
+&= \{ x \in \R : 2^x=2x \} & \quad \text{// double when exponentiated} \\
 &= \{ n \in \N : \exists a,b,c \in \N^*, \; a^n + b^n = c^n \} & \quad \text{// Fermat's Last Theorem} \\
 &= \{ n \in \N : n \in \{1, 2\} \} & \quad \text{// ... cheating ?} \\
 &= \dots
@@ -151,7 +151,7 @@ $$
 $$
 
 Definitions by [extension and intension](https://en.wikipedia.org/wiki/Extensional_and_intensional_definitions) generalize beyond mathematics.
-For example, echoing the cartoon of {{< citet "mcdonnell2026mutts" >}} in introduction, take a snowflake:
+For example, echoing the cartoon of {{< citet "mcdonnell2026mutts" >}} in the introduction, take a snowflake:
 
 - **Intension (dictionary)**: one of the small masses in which snow commonly falls ({{< citep "oed-snowflake" >}}).
 - **Intension (physics)**: a six-fold symmetric ice crystal, formed by vapor deposition around a nucleus ({{< citep "kepler1611" >}}).
@@ -161,7 +161,7 @@ Interestingly, note that defining by intension takes one line, while the last pr
 But on the other hand, we may agree that the latter is the "cleanest" view: yes it is long --- almost infinite --- but it is raw, simple, free of ambiguity, and exhaustive.
 
 I find these concepts highly relevant to understanding what separates supervised from self-supervised learning:
-**annotated/paired datasets are the extension view: simple and direct, they create an unambiguous signal that is probably the strongest possible signal for a given task** --- indeed, what could be a better signal than the explicit answer we are looking for?
+**annotated/paired datasets are the extensional view: simple and direct, they create an unambiguous signal that is probably the strongest possible signal for a given task** --- indeed, what could be a better signal than the explicit answer we are looking for?
 But unfortunately, similarly to the near-infinite snowflake list, paired datasets are expensive to acquire: manual annotation is hard to scale, and pairs are sometimes simply impossible to acquire in nature.
 Hence, I argue that **self-supervised learning is a paradigm shift: train through one or multiple properties characterizing the expected answer --- i.e. necessary and sufficient conditions (hopefully) --- and observe the result emerge**.
 
@@ -178,29 +178,16 @@ Therefore, it is the inexactness of any hand-crafted set of properties, combined
 Nevertheless, switching to self-supervised approaches --- meaning weaker training signals --- has enabled groundbreaking advances in deep learning, as it has enabled training on orders-of-magnitude larger datasets.
 
 Here is my own loose way to think about this tradeoff: training is a bit like estimating a quantity from i.i.d values in statistics.
-If you estimator has a variance $\sigma$ for a single sample, the error shrinks roughly as $\sigma/\sqrt{N}$, where $N$ is your total sample count.
+If your estimator has a variance $\sigma$ for a single sample, the error shrinks roughly as $\sigma/\sqrt{N}$, where $N$ is your total sample count.
 Supervised learning loss function achieves the smallest possible $\sigma$ (also known as a fully efficient estimator, one that reaches the [Cramér–Rao bound](https://en.wikipedia.org/wiki/Cram%C3%A9r%E2%80%93Rao_bound)): it provides the sharpest training signal possible.
-By contrast, imperfect, hand-crafted, self-supervised objectives yield larger $\sigma$ but earn back an $N$ that is orders of magnitude bigger by enable larger datasets.
+By contrast, imperfect, hand-crafted, self-supervised objectives yield larger $\sigma$ but earn back an $N$ that is orders of magnitude bigger by enabling larger datasets.
 And empirically, that trade has paid off.
 Of course, I'm deliberately oversimplifying here --- generalization, data diversity, and so on are swept under the rug --- but I think the core analogy holds.
 
 To summarize, I think that nowadays, **building objectives for self-supervised models boils down to the art of picking the set of properties that best characterizes the target answer**.
 Let's look at practical models to see these ideas in action.
 
-## Intension signals in practice
-
-<!-- ### Reconstruction attempts
-
-But to be honnest ... why ? Why would reconstructing the image be a good indicator?
-If you think about it, L2 reconstruction is the best signal for normal likelihood reconstruction, but other problem, there is no reason why this should be a good signal?
-
-The good signal lives in the base of p(x)
-
-First attempts to apply that, at the best of my kowledge, were by masked reconstruction.
-The idea is simple: objects on natural images are macro, i.e they span multiple pixels: masking part of the image likely does not destroy the object, and being able to reconstruct it means the network understands it.
-
-However, reconstruction tends not to be a good signal. By cosntruction, object can be the same and different at the same time. If I mask half of cloud for example, the right answer could be a lot of things, but it still is a cloud: there is no need to reconstruct the precise pixel-wise shape to known that is is a cloud. Hence, reconstruction is inherently a bad signal to understand scenes, because it is not aligned with the ground truth objective.
-This is an idea vastly populised by LeCun in his idea: for representation learning, you loss should be in the latent, representation space.  -->
+## Intensional signals in practice
 
 ### Invariants for natural images
 
@@ -234,7 +221,7 @@ In practice, SimCLR replaces this toy loss with the softmax-based **InfoNCE** lo
 
 $$ \Ls(\vz_1, \vz_1') = -\log \frac{\exp(\dotprod{\vz_1}{\vz_1'}/\tau)}{\sum_{k \neq 1} \exp(\dotprod{\vz_1}{\vz_k}/\tau)}. $$
 
-Following this idea of positive-negative pairs --- known as **contrastive learning** ---, {{< citet "radford2021learning" >}} created CLIP by replacing an augmented pair $(\text{image}_1, \text{image}_1')$ with an image-caption pair $(\text{image}_1, \text{caption of image}_1)$, mapping images and text into a shared space and paving the way for modern VLMs.
+Following this idea of positive-negative pairs --- known as **contrastive learning** ---, {{< citet "radford2021learning" >}} create CLIP by replacing an augmented pair $(\text{image}_1, \text{image}_1')$ with an image-caption pair $(\text{image}_1, \text{caption of image}_1)$, mapping images and text into a shared space and paving the way for modern VLMs.
 
 A known weakness of this scheme is that some "negatives" sampled from the batch actually share the same content as the anchor; {{< citet "robinson2021contrastive" >}} address this with an importance-sampling correction that debiases these false negatives while emphasizing genuinely hard ones.
 
@@ -264,7 +251,7 @@ $$
 Barlow Twins therefore folds two properties into a single matrix objective: diagonal terms pushed to 1 both for invariance and to prevent collapse, and off-diagonal terms pushed to 0 to protect against redundancy.
 Note that in practice, statistics are estimated over each mini-batch independently.
 
-VICReg ({{< citep "bardes2022vicreg" >}}) later disentangled these into three separate, explicitly weighted losses --- variance, invariance, covariance --- improving on Barlow Twins with finer control and better scalability.
+VICReg ({{< citep "bardes2022vicreg" >}}) later disentangles these into three separate, explicitly weighted losses --- variance, invariance, covariance --- improving on Barlow Twins with finer control and better scalability.
 
 ### Impose the distribution
 
@@ -272,15 +259,15 @@ VICReg ({{< citep "bardes2022vicreg" >}}) later disentangled these into three se
 
 Another way to read Barlow Twins is as shaping the distribution of the embeddings: it constrains the distribution to have unit variance long every axis.
 
-LeJEPA ({{< citep "balestriero2025lejepa" >}}) takes this further, and **explicitely targets a specific shape for the embeddings distribution**.
-The authors show that, in the absent of any knowledge of the downstream task, **the optimal shape for the latent space is a full isotropic Gaussian**: if $\rvx$ ranges over all possible inputs, we want enforce $f_\theta(\rvx) \sim \gN(0, \mI)$.
+LeJEPA ({{< citep "balestriero2025lejepa" >}}) takes this further, and **explicitly targets a specific shape for the embeddings distribution**.
+The authors show that, in the absence of any knowledge of the downstream task, **the optimal shape for the latent space is a full isotropic Gaussian**: if $\rvx$ ranges over all possible inputs, we want to enforce $f_\theta(\rvx) \sim \gN(0, \mI)$.
 Their loss combines an invariance term with a distribution-matching term:
 
 $$\Ls(\rvz, \rvz') = ||\rvz - \rvz'||_2^2 + D(\rvz, \gN(0, \mI)),$$
 
 where $D$ is an integral probability metric. 
 They propose to use the Epps--Pulley normality test applied to random 1D projections of the embeddings for D --- which, to the best of my knowledge, is equivalent to the invariant-kernel MMD objective I derived in a [previous post](/posts/mmd/). 
-They arguee that this estimator is trivial to parallelize, linear in complexity, and is more robust than the "first two moment-matching" approach of Barlow Twin.
+They argue that this estimator is trivial to parallelize, linear in complexity, and is more robust than the "first two moment-matching" approach of Barlow Twins.
 
 You can see the same idea at work in DINOv2 ({{< citep "oquab2023dinov2" >}}) through the KoLeo regularizer, which instead targets a uniform distribution on the $d$-hyperball --- I also wrote a [full post on it](/posts/koleo_regularization/) if you want the details.
 
@@ -291,14 +278,14 @@ Finally, I would like to discuss a very different line of work that takes the wo
 Imagine that you have pre-trained a neural network on a small annotated dataset, and that it generalizes reasonably well to unseen images. Since it generalizes, maybe we could use it to annotate a much larger, unlabeled dataset, and then retrain a new network on this pseudo-labeled dataset. 
 At first glance, this idea from {{< citet "xie2020self" >}} looks like magic: how could additional information appear out of this pipeline? My understanding is that transferring knowledge this way --- something called **distillation** --- lets the new network leverage the much larger unlabeled dataset, and that the pseudo-labels end up being a cleaner, less noisy training signal than the original small annotated dataset, leading to better generalization. To some extent, I like to think of it as a re-organization of the same latent space, thanks to both more diverse data and a cleaner training signal.
 
-{{< citet "grill2020bootstrap" >}} go one step further that this with *Bootstrap Your Own Latent* (or BYOL): instead of the two-stage recipe above, **they merge both stages into one continuous process**. 
+{{< citet "grill2020bootstrap" >}} go one step further than this with *Bootstrap Your Own Latent* (or BYOL): instead of the two-stage recipe above, **they merge both stages into one continuous process**. 
 Rather than a frozen pre-trained teacher, BYOL's teacher gets updated at every training step directly from the student: its weights are simply kept as a moving exponential average of the student's weights. 
 I like to think of it as **differentiated distillation**, in the calculus sense: instead of discrete rounds of "train fully, relabel, retrain," the teacher becomes a continuously moving target just one small step ahead of the student it supervises, with no annotated dataset needed anywhere in the process.
 
 But once again, nothing stops teacher and student from both converging to a constant. 
 DINO ({{< citep "caron2021emerging" >}}) refines the recipe with two extra tricks applied to the teacher's output: 1) **centering**, subtracting a running average of the batch outputs so that no single dimension dominates, and 2) **sharpening**, using a lower softmax temperature for the teacher than for the student, so the teacher's output is more peaked/confident than the student's --- giving the student something sharper to chase without letting the whole system collapse to a single point.
 
-DINOv2 ({{< citep "oquab2023dinov2" >}}) pushes this same recipe further --- larger models, curated data, extra regularizers such as the KoLeo term mentioned above --- and showed exceptional performance at its release. 
+DINOv2 ({{< citep "oquab2023dinov2" >}}) pushes this same recipe further --- larger models, curated data, extra regularizers such as the KoLeo term mentioned above --- and shows exceptional performance at its release. 
 This teacher/student self-distillation pattern, born out of a simple pseudo-labeling idea, has since become one of the default recipes for training modern self-supervised vision foundation models ({{< citep "simeoni2025dinov3" >}}).
 
 ## Finding good signals
