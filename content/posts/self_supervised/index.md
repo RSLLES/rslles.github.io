@@ -1,7 +1,7 @@
 ---
 title: "Self-supervised learning is about informative signals"
-date: 2026-07-01
-draft: true
+date: 2026-07-22
+draft: false
 bib:
   - id: "kepler1611"
     title: "Strena seu de Nive Sexangula"
