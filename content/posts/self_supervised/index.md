@@ -33,6 +33,12 @@ bib:
     journal: "Advances in Neural Information Processing Systems (NeurIPS)"
     year: 2020
     url: "https://arxiv.org/abs/2006.07733"
+  - id: "xie2020self"
+    title: "Self-training with Noisy Student improves ImageNet classification"
+    author: "Xie, Qizhe and Luong, Minh-Thang and Hovy, Eduard and Le, Quoc V"
+    booktitle: "Conference on Computer Vision and Pattern Recognition (CVPR)"
+    url: "https://arxiv.org/abs/1911.04252"
+    year: 2020
   - id: "radford2021learning"
     title: "Learning Transferable Visual Models From Natural Language Supervision"
     author: "Radford, Alec and Kim, Jong Wook and Hallacy, Chris and Ramesh, Aditya and Goh, Gabriel and Agarwal, Sandhini and Sastry, Girish and Askell, Amanda and Mishkin, Pamela and Clark, Jack and others"
@@ -81,6 +87,12 @@ bib:
     journal: "arXiv preprint"
     year: 2025
     url: "https://arxiv.org/abs/2511.08544"
+  - id: "simeoni2025dinov3"
+    title: "DINOv3"
+    author: "Siméoni, Oriane and Vo, Huy V and Seitzer, Maximilian and Baldassarre, Federico and Oquab, Maxime and Jose, Cijo and Khalidov, Vasil and Szafraniec, Marc and Yi, Seungeun and Ramamonjisoa, Michaël and others"
+    journal: "arXiv preprint"
+    year: 2025
+    url: "https://arxiv.org/abs/2508.10104"
   - id: "mcdonnell2026mutts"
     title: "Mutts"
     author: "McDonnell, Patrick"
@@ -272,32 +284,28 @@ They arguee that this estimator is trivial to parallelize, linear in complexity,
 
 You can see the same idea at work in DINOv2 ({{< citep "oquab2023dinov2" >}}) through the KoLeo regularizer, which instead targets a uniform distribution on the $d$-hyperball --- I also wrote a [full post on it](/posts/koleo_regularization/) if you want the details.
 
-### Litteraly "self-supervised" through distillation
+### Literally "self-supervised" through distillation
 
-Finally, I would like to discuss a very different lign of work that takes the word "self-supervised learning" to the letter.
+Finally, I would like to discuss a very different line of work that takes the words "self-supervised learning" to the letter.
 
-Imagine that you have pre-trained a neural network using a small annotated dataset.
-Your hope is that it generalizes to unseen images.
-If that is true, then maybe we could use this network to annotate a larger unlabel dataset.
-And then, you could retrain another neural network based on this new large dataset!
+Imagine that you have pre-trained a neural network on a small annotated dataset, and that it generalizes reasonably well to unseen images. Since it generalizes, maybe we could use it to annotate a much larger, unlabeled dataset, and then retrain a new network on this pseudo-labeled dataset. 
+At first glance, this idea from {{< citet "xie2020self" >}} looks like magic: how could additional information appear out of this pipeline? My understanding is that transferring knowledge this way --- something called **distillation** --- lets the new network leverage the much larger unlabeled dataset, and that the pseudo-labels end up being a cleaner, less noisy training signal than the original small annotated dataset, leading to better generalization. To some extent, I like to think of it as a re-organization of the same latent space, thanks to both more diverse data and a cleaner training signal.
 
-At first glance, it seems like magic: how could additionnal information appear from this pipeline?
-My understanding is that transfering knowledge from one network to another --- something called distrillation --- allows to leverage the unseen data and create a clear learning signal for the student is much stronger than the learning signal from the teacher, leading to better generalization.
-To some extent, I like to think of it as a re-organization of the same latent space thanks to both more diverse data and a cleaner training signal.
+{{< citet "grill2020bootstrap" >}} go one step further that this with *Bootstrap Your Own Latent* (or BYOL): instead of the two-stage recipe above, **they merge both stages into one continuous process**. 
+Rather than a frozen pre-trained teacher, BYOL's teacher gets updated at every training step directly from the student: its weights are simply kept as a moving exponential average of the student's weights. 
+I like to think of it as **differentiated distillation**, in the calculus sense: instead of discrete rounds of "train fully, relabel, retrain," the teacher becomes a continuously moving target just one small step ahead of the student it supervises, with no annotated dataset needed anywhere in the process.
 
-That's the core idea behind BYOL ({{< citep "grill2020bootstrap" >}}), which stands for *Boostrap Your Own Latent*.
-But even more than that, {{< citet "grill2020bootstrap" >}} have proposed **to differentiate this pipeline**:
-instead of considering one completely pretrain network $f_{\theta_0}$, they developed a method to simulatenously train the small network and the large one.
-The idea is that the annotator network --- called a teacher --- is nothing but a moving exponential average of the student.
-But to make it a good teacher, they propose to 1) increase the temperature of the last sigmoid layer, which result in a sharper output vector --- we increase the confidence of the teacher in its answer, with the hope to slowly increase its confidence over time with this trick and 2) they re-center the mean output to create a well centered space and prevent collapsing issues.
+But once again, nothing stops teacher and student from both converging to a constant. 
+DINO ({{< citep "caron2021emerging" >}}) refines the recipe with two extra tricks applied to the teacher's output: 1) **centering**, subtracting a running average of the batch outputs so that no single dimension dominates, and 2) **sharpening**, using a lower softmax temperature for the teacher than for the student, so the teacher's output is more peaked/confident than the student's --- giving the student something sharper to chase without letting the whole system collapse to a single point.
 
-The refined version of this method --- with plenty of added tricks --- is the DiNO family ({{< citep "caron2021emerging" >}}; {{< citep "oquab2023dinov2" >}}), where especially DINOv2 ({{< citep "oquab2023dinov2" >}}) showed exceptionnal performance at its release time.
+DINOv2 ({{< citep "oquab2023dinov2" >}}) pushes this same recipe further --- larger models, curated data, extra regularizers such as the KoLeo term mentioned above --- and showed exceptional performance at its release. 
+This teacher/student self-distillation pattern, born out of a simple pseudo-labeling idea, has since become one of the default recipes for training modern self-supervised vision foundation models ({{< citep "simeoni2025dinov3" >}}).
 
 ## Finding good signals
 
-After trying to untagled what makes a learning pipeline efficient, can we derive some flywheel, some bluprints from this that could hel us build better tools?
-- First and foremost. Define what you want. Imagine if you had accees to the solution: what properties should it respect ? Add those which you kown you don't care about as invariant, focus on what you want.
-- Prvent collapse. Check if 0 is a trivial solution: if it is, you are missing a corner case, hence you need to add somehting.
-- Finalyy, I would arguee that simpe systems are usually the best ones. This is a natural way of thinking, but stacking complexity layers on top of each other tends to yield to over ingenieered. The world is beatifull, and often simple well defined objkective are available, through this is only my inner-presonnal intuition.
+After trying to untangle what makes a self-supervised learning objective efficient, let's build a flywheel summarizing everything:
+- First and foremost: everything is about defining the answer. What properties should it follow --- i.e. which elements leave it [invariant](#invariants-for-natural-images)? If a property is too complicated, can we reasonably simplify it, maybe at the cost of a slightly imperfect approximation?
+- Then, check for corner cases. We have seen that simply defining invariants is not enough, since trivial solutions like $0$ are invariant to pretty much every transformation. There should also be a property that forces diversity in the space: negative samples in [contrastive learning](#contrastive-learning), a variance constraint in [Barlow Twins](#leverage-cross-correlation), a target [output distribution](#impose-the-distribution), or centering and entropy regularization in [DINO and DINOv2](#literally-self-supervised-through-distillation), or something else!
+- And finally, I would argue that simple systems are usually better in general. Stacking complex tricks on top of each other tends to produce over-engineered solutions, and is often a sign of a missed, simpler explanation --- though that's admittedly only my personal intuition.
 
-Have fun building you mdoels, fellow reseacrher !
+Have fun building objectives, fellow researchers!
