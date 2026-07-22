@@ -27,6 +27,12 @@ bib:
     year: 2020
     journal: "Advances in Neural Information Processing Systems (NeurIPS)"
     url: "https://arxiv.org/abs/2007.13916"
+  - id: "grill2020bootstrap"
+    title: "Bootstrap your own latent: A new approach to self-supervised Learning"
+    author: "Grill, Jean-Bastien and Strub, Florian and Altché, Florent and Tallec, Corentin and Richemond, Pierre and Buchatskaya, Elena and Doersch, Carl and Avila Pires, Bernardo and Guo, Zhaohan and Gheshlaghi Azar, Mohammad and others"
+    journal: "Advances in Neural Information Processing Systems (NeurIPS)"
+    year: 2020
+    url: "https://arxiv.org/abs/2006.07733"
   - id: "radford2021learning"
     title: "Learning Transferable Visual Models From Natural Language Supervision"
     author: "Radford, Alec and Kim, Jong Wook and Hallacy, Chris and Ramesh, Aditya and Goh, Gabriel and Agarwal, Sandhini and Sastry, Girish and Askell, Amanda and Mishkin, Pamela and Clark, Jack and others"
@@ -45,6 +51,12 @@ bib:
     year: 2021
     journal: "Conference on Computer Vision and Pattern Recognition (CVPR)"
     url: "https://arxiv.org/abs/2011.10566"
+  - id: "caron2021emerging"
+    title: "Emerging Properties in Self-Supervised Vision Transformers"
+    author: "Caron, Mathilde and Touvron, Hugo and Misra, Ishan and Jégou, Hervé and Mairal, Julien and Bojanowski, Piotr and Joulin, Armand"
+    journal: "International Conference on Computer Vision (ICCV)"
+    year: 2021
+    url: "https://arxiv.org/abs/2104.14294"
   - id: "zbontar2021barlow"
     title: "Barlow Twins: Self-Supervised Learning via Redundancy Reduction"
     author: "Zbontar, Jure and Jing, Li and Misra, Ishan and LeCun, Yann and Deny, Stéphane"
@@ -57,18 +69,18 @@ bib:
     journal: "International Conference on Learning Representations (ICLR)"
     year: 2022
     url: "https://arxiv.org/abs/2105.04906"
-  - id: "balestriero2025lejepa"
-    title: "LeJEPA: Provable and Scalable Self-Supervised Learning Without the Heuristics"
-    author: "Balestriero, Randall and LeCun, Yann"
-    journal: "arXiv preprint"
-    year: 2025
-    url: "https://arxiv.org/abs/2511.08544"
   - id: "oquab2023dinov2"
     title: "DINOv2: Learning Robust Visual Features without Supervision"
     author: "Oquab, Maxime and Darcet, Timothée and Moutakanni, Théo and Vo, Huy and Szafraniec, Marc and Khalidov, Vasil and Fernandez, Pierre and Haziza, Daniel and Massa, Francisco and El-Nouby, Alaaeldin and others"
     journal: "Transactions on Machine Learning Research (TMLR)"
     year: 2024
     url: "https://arxiv.org/abs/2304.07193"
+  - id: "balestriero2025lejepa"
+    title: "LeJEPA: Provable and Scalable Self-Supervised Learning Without the Heuristics"
+    author: "Balestriero, Randall and LeCun, Yann"
+    journal: "arXiv preprint"
+    year: 2025
+    url: "https://arxiv.org/abs/2511.08544"
   - id: "mcdonnell2026mutts"
     title: "Mutts"
     author: "McDonnell, Patrick"
@@ -85,7 +97,7 @@ bib:
 
 A large part of deep learning consists of training highly parameterized neural networks to map input data to quantities of interest.
 For instance, image classification assigns class probability to images, inverse problems estimate initial quantities from corrupted measurements, representation learning attaches relevant embeddings to objects, etc ...
-The standard framework in the field involves 1) pick a good class of parametric functions -- i.e. efficient model architectures --, 2) design an objective, a.k.a. a loss function, and 3) select a first order optimization method to minimize it.
+The standard framework in the field involves 1) pick a good class of parametric functions -- i.e. efficient model architectures --, 2) design an objective, a.k.a. a loss function, and 3) minimize it with your favorite optimization algorithm.
 
 This blogpost develops my insights about step 2), especially in the self-supervised setup.
 Indeed, while loss functions for supervised training are generally straightforward, 
@@ -93,8 +105,8 @@ designing objectives for self-supervised learning that maximize training efficie
 Hence, in this blogpost, I would like to explore **how can we design good learning signals for a given task in a self-supervised setting?**
 
 TL;DR, my intuition is **that loss functions for self-supervised learning come from necessary and, hopefully, sufficient conditions the answer must satisfy**, rather than directly from the clean answer itself as in supervised learning. 
-Interestingly, in logic reasoning, definitions by conditions vs a list of answers are respectfully refered to as intensional vs extensional definitions.
-Hence, this post starts by unpacking that analogy --- intension vs extension --- then deciphers several self-supervised approaches through this lens, and concludes with practical advice and recipes to apply them in our own projects.
+Interestingly, in [logic reasoning]((https://en.wikipedia.org/wiki/Logic)), definitions by conditions vs the complete list of answers are respectfully refered to as intensional vs extensional definitions.
+This post starts by unpacking that analogy --- intension vs extension --- then deciphers several self-supervised approaches through this lens, and concludes with practical advice and recipes to apply them in our own projects.
 
 {{< figure src="./intro.gif" attr="*Mutts* by Patrick McDonnell, 2026." attrlink="https://mutts.com/products/strip-012621?variant=41141367603357" align="center" >}}
 
@@ -126,7 +138,7 @@ $$
 \end{aligned}
 $$
 
-Of course, as logical concepts, definitions by [extension and intension](https://en.wikipedia.org/wiki/Extensional_and_intensional_definitions) generalize beyond mathematics.
+Definitions by [extension and intension](https://en.wikipedia.org/wiki/Extensional_and_intensional_definitions) generalize beyond mathematics.
 For example, echoing the cartoon of {{< citet "mcdonnell2026mutts" >}} in introduction, take a snowflake:
 
 - **Intension (dictionary)**: one of the small masses in which snow commonly falls ({{< citep "oed-snowflake" >}}).
@@ -143,9 +155,11 @@ Hence, I argue that **self-supervised learning is a paradigm shift: train throug
 
 ## The price of a weaker signal
 
+![The tree swing cartoon](./tree_swing.avif)
+
 On paper, intensional and extensional definitions are equivalent, but in practice, finding a set of properties that perfectly captures your target outputs is hard.
 Think about it: can you name the exact properties shared by *all* natural images?
-This shift is imposed, not deliberate --- in an ideal world with an enormous annotated dataset, I am not sure anyone would have bothered dealing with self-supervised methods.
+Note that this paradigm shift is not deliberate: it is imposed by the lack of ground truth data --- in an ideal world with an enormous annotated dataset, I am not sure anyone would have bothered dealing with self-supervised methods.
 
 Therefore, it is the inexactness of any hand-crafted set of properties, combined with the sheer multiplicity of possible definitions, that creates a landscape of possible self-supervised objectives, each yielding a different training signal.
 **I argue that the quality of your training signal is a direct reflection of how much your chosen properties manage to capture the ideal, unreachable extensional definition you seek.**
@@ -178,6 +192,8 @@ This is an idea vastly populised by LeCun in his idea: for representation learni
 
 ### Invariants for natural images
 
+![Data augmentations](./augmentations.avif)
+
 If you think about it, equations in physics act as **invariants**, in the same sense as our quadratic equation above.
 They define the set of valid solutions: every valid wavefunction must satisfy the Schrödinger equation, every fluid field the Navier–Stokes equations, every moving object the laws of motion.
 This idea alone is strong enough to train a neural network: physics-informed neural networks ({{< citep "raissi2019pinn" >}}) fit a network by penalizing how much it violates the governing equation, with no labeled solution required --- the equation itself is the self-supervised signal.
@@ -185,7 +201,7 @@ This idea alone is strong enough to train a neural network: physics-informed neu
 Can we apply the same idea to natural images?
 If the task is to recognize objects, two invariants come to mind:
 1. Objects are macro: they span many pixels, so cropping or zooming rarely destroys their identity.
-2. Objects stay recognizable under a wide range of transformations --- flips, contrast, brightness, color shifts.
+2. Objects stay recognizable under a wide range of transformations --- flips, contrast, brightness, color shifts, etc ...
 
 These transformations are known today as **data augmentation** ({{< citep "chen2020simple" >}}).
 
@@ -194,6 +210,8 @@ But **they are not sufficient**: a constant, collapsed representation trivially 
 This is the **representation collapse issue** ({{< citep "chen2021simsiam" >}}), and avoiding it requires an additional property.
 
 ### Contrastive learning
+
+![Contrastive learning](./contrastive.avif)
 
 SimCLR ({{< citep "chen2020simple" >}}) tackles this by leveraging the size of the dataset: **two randomly picked images are likely different objects**.
 Suppose the representation space is the unit sphere $\{ z \in \R^d : ||z||_2 = 1 \}$.
@@ -208,7 +226,9 @@ Following this idea of positive-negative pairs --- known as **contrastive learni
 
 A known weakness of this scheme is that some "negatives" sampled from the batch actually share the same content as the anchor; {{< citet "robinson2021contrastive" >}} address this with an importance-sampling correction that debiases these false negatives while emphasizing genuinely hard ones.
 
-### Maximize cross-correlation
+### Leverage cross-correlation
+
+![Barlow Twins](./barlow.avif)
 
 Let's view the embedding as a random variable $\rz = f_\theta (\rvx)$, where $\rvx$ is a random image from the dataset, and assume for now that $\rz$ is scalar.
 A collapsed representation means $\rz = \cst$, i.e. $\Var(\rz) = 0$.
@@ -229,35 +249,49 @@ $$\Ls(\rvz, \rvz') = \frobenius{\rmC}{\mI} \quad \text{where} \;
 [\rmC]_{i,j} = \rho([\rvz]_i, [\rvz']_j)
 $$
 
-In practice, these statistics are estimated over the batch.
+Barlow Twins therefore folds two properties into a single matrix objective: diagonal terms pushed to 1 both for invariance and to prevent collapse, and off-diagonal terms pushed to 0 to protect against redundancy.
+Note that in practice, statistics are estimated over each mini-batch independently.
 
-Barlow Twins therefore folds two properties into a single matrix objective: diagonal terms pushed to 1 for invariance (which, as a side effect, also prevents collapse), and off-diagonal terms pushed to 0 against redundancy.
-VICReg ({{< citep "bardes2022vicreg" >}}) later disentangled these into three separate, explicitly weighted losses --- variance, invariance, covariance --- trading Barlow Twins' single hyperparameter for finer control and better scalability.
+VICReg ({{< citep "bardes2022vicreg" >}}) later disentangled these into three separate, explicitly weighted losses --- variance, invariance, covariance --- improving on Barlow Twins with finer control and better scalability.
 
-### Shape the distribution
+### Impose the distribution
+
+![LeJEPA](./lejepa.avif)
 
 Another way to read Barlow Twins is as shaping the distribution of the embeddings: it constrains the distribution to have unit variance long every axis.
 
 LeJEPA ({{< citep "balestriero2025lejepa" >}}) takes this further, and **explicitely targets a specific shape for the embeddings distribution**.
-The authors show that, in the absent of any knowledge of the downstream task, **the optimal shape for the latent space is a full isotropic Gaussian**: if $\rvx$ ranges over all possible inputs, we want enforce $f_\theta(\rvx) \sim \gN(0, I)$.
+The authors show that, in the absent of any knowledge of the downstream task, **the optimal shape for the latent space is a full isotropic Gaussian**: if $\rvx$ ranges over all possible inputs, we want enforce $f_\theta(\rvx) \sim \gN(0, \mI)$.
 Their loss combines an invariance term with a distribution-matching term:
 
-$$\Ls(\rvz, \rvz') = ||\rvz - \rvz'||_2^2 + D(\rvz, \gN(0, I)),$$
+$$\Ls(\rvz, \rvz') = ||\rvz - \rvz'||_2^2 + D(\rvz, \gN(0, \mI)),$$
 
 where $D$ is an integral probability metric. 
 They propose to use the Epps--Pulley normality test applied to random 1D projections of the embeddings for D --- which, to the best of my knowledge, is equivalent to the invariant-kernel MMD objective I derived in a [previous post](/posts/mmd/). 
-They arguee that this estimator is trivial to parallelize, linear in complexity, and is more robust than the "moment-matching" approach of Barlow Twin.
+They arguee that this estimator is trivial to parallelize, linear in complexity, and is more robust than the "first two moment-matching" approach of Barlow Twin.
 
 You can see the same idea at work in DINOv2 ({{< citep "oquab2023dinov2" >}}) through the KoLeo regularizer, which instead targets a uniform distribution on the $d$-hyperball --- I also wrote a [full post on it](/posts/koleo_regularization/) if you want the details.
 
-### Litteraly "self"-supervised with distillation
+### Litteraly "self-supervised" through distillation
 
-One funny idea: what if 
-One direction has been through distillation: what if we could somehow get 
-That's the idea behind BYOL, which has later been optimized in various way by DiNO.
+Finally, I would like to discuss a very different lign of work that takes the word "self-supervised learning" to the letter.
 
-By the way, this is why I believe the idea of training on your own latent - or BYOL - makes sens, and why distallation often allow to overpass the capability of a ground truth model: the learning signal for the student is much stronger than the learning signal from the teacher, hence leading ot a much better generalization.
-To some extent, it is a re-organization of the same latent space, but with a cleaner signal, that de-sambiguize weird situations and exploit the still not perfecly understoo behavior of neural network to generalize.
+Imagine that you have pre-trained a neural network using a small annotated dataset.
+Your hope is that it generalizes to unseen images.
+If that is true, then maybe we could use this network to annotate a larger unlabel dataset.
+And then, you could retrain another neural network based on this new large dataset!
+
+At first glance, it seems like magic: how could additionnal information appear from this pipeline?
+My understanding is that transfering knowledge from one network to another --- something called distrillation --- allows to leverage the unseen data and create a clear learning signal for the student is much stronger than the learning signal from the teacher, leading to better generalization.
+To some extent, I like to think of it as a re-organization of the same latent space thanks to both more diverse data and a cleaner training signal.
+
+That's the core idea behind BYOL ({{< citep "grill2020bootstrap" >}}), which stands for *Boostrap Your Own Latent*.
+But even more than that, {{< citet "grill2020bootstrap" >}} have proposed **to differentiate this pipeline**:
+instead of considering one completely pretrain network $f_{\theta_0}$, they developed a method to simulatenously train the small network and the large one.
+The idea is that the annotator network --- called a teacher --- is nothing but a moving exponential average of the student.
+But to make it a good teacher, they propose to 1) increase the temperature of the last sigmoid layer, which result in a sharper output vector --- we increase the confidence of the teacher in its answer, with the hope to slowly increase its confidence over time with this trick and 2) they re-center the mean output to create a well centered space and prevent collapsing issues.
+
+The refined version of this method --- with plenty of added tricks --- is the DiNO family ({{< citep "caron2021emerging" >}}; {{< citep "oquab2023dinov2" >}}), where especially DINOv2 ({{< citep "oquab2023dinov2" >}}) showed exceptionnal performance at its release time.
 
 ## Finding good signals
 
