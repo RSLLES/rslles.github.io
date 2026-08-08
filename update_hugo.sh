@@ -46,3 +46,20 @@ if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
 else
 	echo "You are already up to date."
 fi
+
+# 4. Keep the GitHub Actions workflow pinned to the locally installed version
+WORKFLOW="$(dirname "$0")/.github/workflows/hugo.yaml"
+INSTALLED_VERSION=$(hugo version 2>/dev/null | grep -oP 'v\K[0-9]+\.[0-9]+\.[0-9]+')
+WORKFLOW_VERSION=$(grep -oP '^\s*HUGO_VERSION:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "$WORKFLOW" 2>/dev/null)
+
+if [ -n "$INSTALLED_VERSION" ] && [ -n "$WORKFLOW_VERSION" ] && [ "$INSTALLED_VERSION" != "$WORKFLOW_VERSION" ]; then
+	echo
+	echo "Workflow pins HUGO_VERSION $WORKFLOW_VERSION, but Hugo $INSTALLED_VERSION is installed."
+	read -rp "Update the workflow to $INSTALLED_VERSION? [y/N] " REPLY
+	if [[ "$REPLY" =~ ^[Yy]$ ]]; then
+		sed -i "s/^\(\s*HUGO_VERSION:\s*\).*/\1$INSTALLED_VERSION/" "$WORKFLOW"
+		echo "Updated $WORKFLOW."
+	else
+		echo "Left unchanged."
+	fi
+fi
