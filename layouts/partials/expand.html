@@ -1,0 +1,3 @@
+{{- /* Expand shortcodes inside a frontmatter string. Goldmark appends a
+       newline after the substituted shortcode, hence the chomp. */ -}}
+{{- .page.RenderString .text | chomp -}}

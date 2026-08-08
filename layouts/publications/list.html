@@ -31,7 +31,7 @@
                 . </span>
             <br />
 
-            {{- with .Params.journal }}<span><em>{{ . }}</em>.</span><br />{{ end }}
+            {{- with .Params.journal }}<span><em>{{ partial "expand.html" (dict "page" $ "text" .) }}</em>.</span><br />{{ end }}
 
             <div style="display: flex; justify-content: space-between; align-items: baseline;">
                 <span>{{ .Date.Year }}.</span>
@@ -61,7 +61,7 @@
                 . </span>
             <br />
 
-            {{- with .Params.context }}<span><em>{{ . }}</em>.</span><br />{{ end }}
+            {{- with .Params.context }}<span><em>{{ partial "expand.html" (dict "page" $ "text" .) }}</em>.</span><br />{{ end }}
 
             <div style="display: flex; justify-content: space-between; align-items: baseline;">
                 <span>{{ .Date.Year }}.</span>

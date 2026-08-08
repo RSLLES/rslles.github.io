@@ -15,7 +15,7 @@
                 {{- end -}}
                 . </span>
 
-            {{- with .journal }}<em>{{ . }}</em>. {{ end -}}
+            {{- with .journal }}<em>{{ partial "expand.html" (dict "page" $.Page "text" .) }}</em>. {{ end -}}
 
             {{ .year }}.
         </li>

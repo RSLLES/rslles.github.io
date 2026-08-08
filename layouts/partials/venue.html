@@ -1,0 +1,8 @@
+{{- /* Resolve a venue key from data/venues.yaml, or fail loudly. */ -}}
+{{- $key := . -}}
+{{- with index (hugo.Data.venues | default dict) $key -}}
+{{- . -}}
+{{- else -}}
+<span style="color:red; font-weight:bold;">[? {{ $key }}]</span>
+{{- warnf "Unknown venue: %s" $key -}}
+{{- end -}}

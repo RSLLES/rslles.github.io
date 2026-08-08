@@ -13,43 +13,43 @@ bib:
     title: "Estimating or Propagating Gradients Through Stochastic Neurons for Conditional Computation"
     author: "Bengio, Yoshua and Léonard, Nicholas and Courville, Aaron"
     year: 2013
-    journal: "arXiv preprint 1308.3432"
+    journal: "{{< venue arXiv >}} 1308.3432"
     url: "https://arxiv.org/abs/1308.3432"
   - id: "kingma2013auto"
     title: "Auto-Encoding Variational Bayes"
     author: "Kingma, Diederik P and Welling, Max"
     year: 2014
-    journal: "International Conference on Learning Representations (ICLR)"
+    journal: "{{< venue ICLR >}}"
     url: "https://arxiv.org/abs/1312.6114"
   - id: "maddison2016concrete"
     title: "The Concrete Distribution: A Continuous Relaxation of Discrete Random Variables"
     author: "Maddison, Chris J and Mnih, Andriy and Teh, Yee Whye"
     year: 2017
-    journal: "International Conference on Learning Representations (ICLR)"
+    journal: "{{< venue ICLR >}}"
     url: "https://arxiv.org/abs/1611.00712"
   - id: "jang2016categorical"
     title: "Categorical Reparameterization with Gumbel-Softmax"
     author: "Jang, Eric and Gu, Shixiang and Poole, Ben"
     year: 2017
-    journal: "International Conference on Learning Representations (ICLR)"
+    journal: "{{< venue ICLR >}}"
     url: "https://arxiv.org/abs/1611.01144"
   - id: "schulman2017proximal"
     title: "Proximal Policy Optimization Algorithms"
     author: "Schulman, John and Wolski, Filip and Dhariwal, Prafulla and Radford, Alec and Klimov, Oleg"
     year: 2017
-    journal: "arXiv preprint"
+    journal: "{{< venue arXiv >}}"
     url: "https://arxiv.org/abs/1707.06347"
   - id: "kool2019buy"
     title: "Buy 4 REINFORCE Samples, Get a Baseline for Free!"
     author: "Kool, Wouter and van Hoof, Herke and Welling, Max"
     year: 2019
-    journal: "International Conference on Learning Representations (ICLR)"
+    journal: "{{< venue ICLR >}}"
     url: "https://openreview.net/forum?id=r1lgTGL5DE"
   - id: "shao2024deepseekmath"
     title: "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models"
     author: "Shao, Zhihong and Wang, Peiyi and Zhu, Qihao and Xu, Runxin and Song, Junxiao and Bi, Xiao and Zhang, Haowei and Zhang, Mingchuan and Li, YK and Wu, Yang and others"
     year: 2024
-    journal: "arXiv preprint"
+    journal: "{{< venue arXiv >}}"
     url: "https://arxiv.org/abs/2402.03300"
 ---
 

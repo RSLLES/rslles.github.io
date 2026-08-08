@@ -24,13 +24,13 @@ bib:
   - id: "sablayrolles2018spreading"
     title: "Spreading vectors for similarity search"
     author: "Sablayrolles, Alexandre and Douze, Matthijs and Schmid, Cordelia and Jégou, Hervé"
-    journal: "International Conference on Learning Representations (ICLR)"
+    journal: "{{< venue ICLR >}}"
     year: 2019
     url: "https://arxiv.org/abs/1806.03198"
   - id: "oquab2023dinov2"
     title: "DINOv2: Learning Robust Visual Features without Supervision"
     author: "Oquab, Maxime and Darcet, Timothée and Moutakanni, Théo and Vo, Huy and Szafraniec, Marc and Khalidov, Vasil and Fernandez, Pierre and Haziza, Daniel and Massa, Francisco and El-Nouby, Alaaeldin and others"
-    journal: "Transactions on Machine Learning Research (TMLR)"
+    journal: "{{< venue TMLR >}}"
     year: 2024
     url: "https://arxiv.org/abs/2304.07193"
 ---

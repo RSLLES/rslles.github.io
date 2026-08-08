@@ -1,0 +1,12 @@
+# Canonical venue names, so a conference is spelled the same way everywhere.
+# Use with the `venue` shortcode, in body text or in frontmatter:
+#   journal: "{{< venue ICLR >}}"
+
+arXiv:   "arXiv preprint"
+CVPR:    "Conference on Computer Vision and Pattern Recognition (CVPR)"
+ICCV:    "International Conference on Computer Vision (ICCV)"
+ICLR:    "International Conference on Learning Representations (ICLR)"
+ICML:    "International Conference on Machine Learning (ICML)"
+JMLR:    "Journal of Machine Learning Research (JMLR)"
+NeurIPS: "Advances in Neural Information Processing Systems (NeurIPS)"
+TMLR:    "Transactions on Machine Learning Research (TMLR)"

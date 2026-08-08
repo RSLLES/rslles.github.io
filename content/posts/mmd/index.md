@@ -18,14 +18,14 @@ bib:
   - id: "rahimi2007random"
     title: "Random features for large-scale kernel machines"
     author: "Rahimi, Ali and Recht, Benjamin"
-    journal: "Advances in Neural Information Processing Systems (NeurIPS)"
+    journal: "{{< venue NeurIPS >}}"
     year: 2007
     url: "https://proceedings.neurips.cc/paper_files/paper/2007/file/013a006f03dbc5392effeb8f18fda755-Paper.pdf"
   - id: "gretton2012kernel"
     title: "A Kernel Two-Sample Test"
     author: "Gretton, Arthur and Borgwardt, Karsten M and Rasch, Malte J and Scholkopf, Bernhard and Smola, Alexander"
     year: 2012
-    journal: "Journal of Machine Learning Research 13, 723-773"
+    journal: "{{< venue JMLR >}} 13, 723-773"
     url: "https://www.jmlr.org/papers/volume13/gretton12a/gretton12a.pdf"
   - id: "mairal2022kernel"
     title: "Kernel methods for machine learning"
@@ -37,30 +37,30 @@ bib:
     title: "MMD Aggregated Two-Sample Test"
     author: "Schrab, Antonin and Kim, Ilmun and Albert, Melisande and Laurent, Beatrice and Guedj, Benjamin and Gretton, Arthur"
     year: 2023
-    journal: "Journal of Machine Learning Research"
+    journal: "{{< venue JMLR >}}"
     url: "https://www.jmlr.org/papers/volume24/21-1289/21-1289.pdf"
   - id: "biggs2023mmd"
     title: "MMD-Fuse: Learning and Combining Kernels for Two-Sample Testing Without Data Splitting"
     author: "Biggs, Felix and Schrab, Antonin and Gretton, Arthur"
     year: 2023
-    journal: "Advances in Neural Information Processing Systems (NeurIPS)"
+    journal: "{{< venue NeurIPS >}}"
     url: "https://proceedings.neurips.cc/paper_files/paper/2023/file/edd00cead3425393baf13004de993017-Paper-Conference.pdf"
   - id: "hertrich2023generative"
     title: "Generative sliced MMD flows with Riesz kernels"
     author: "Hertrich, Johannes and Wald, Christian and Altekruger, Fabian and Hagemann, Paul"
     year: 2024
-    journal: "International Conference on Learning Representations (ICLR)"
+    journal: "{{< venue ICLR >}}"
     url: "https://arxiv.org/abs/2305.11463"
   - id: "mukherjee2025minimax"
     title: "Minimax Optimal Kernel Two-Sample Tests with Random Features"
     author: "Mukherjee, Soumya and Sriperumbudur, Bharath K"
-    journal: "arXiv preprint"
+    journal: "{{< venue arXiv >}}"
     year: 2025
     url: "https://arxiv.org/abs/2502.20755"
   - id: "balestriero2025lejepa"
     title: "Lejepa: Provable and scalable self-supervised learning without the heuristics"
     author: "Balestriero, Randall and LeCun, Yann"
-    journal: "arXiv preprint"
+    journal: "{{< venue arXiv >}}"
     year: 2025
     url: "https://arxiv.org/abs/2511.08544"
 ---
