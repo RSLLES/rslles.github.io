@@ -4,7 +4,9 @@ timeZone: Europe/Paris
 title: Romain Séailles
 theme: ["PaperMod"]
 
-enableGitInfo: true
+# "Last edit" dates are maintained by hand, see layouts/partials/post_meta.html
+frontmatter:
+  lastmod: ['lastmod', 'date']
 
 params:
   author: Romain Séailles

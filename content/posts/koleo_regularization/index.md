@@ -1,6 +1,7 @@
 ---
 title: "The KoLeo regularization"
 date: 2026-02-20
+lastmod: 2026-03-07
 draft: false
 bib:
   - id: "kozachenko1987sample"

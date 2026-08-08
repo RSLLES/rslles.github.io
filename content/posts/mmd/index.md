@@ -1,6 +1,7 @@
 ---
 title: "Maximum mean discrepancy"
 date: 2026-03-02
+lastmod: 2026-05-24
 draft: false
 bib:
   - id: "aronszajn1950theory"
