@@ -20,7 +20,7 @@ jobs:
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       HUGO_VERSION: 0.164.0
-      TZ: Europe/Oslo
+      TZ: Europe/Paris
     steps:
       - name: Checkout
         uses: actions/checkout@v5

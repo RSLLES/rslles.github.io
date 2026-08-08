@@ -1,5 +1,6 @@
 baseURL: https://romainseailles.fr
 locale: en-us
+timeZone: Europe/Paris
 title: Romain Séailles
 theme: ["PaperMod"]
 
