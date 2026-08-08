@@ -156,6 +156,7 @@
 "\\vmu": "\\bold{\\mu}"
 "\\vtheta": "\\bold{\\theta}"
 "\\vsigma": "\\bold{\\sigma}"
+"\\vepsilon": "\\bold{\\epsilon}"
 "\\va": "\\bold{a}"
 "\\vb": "\\bold{b}"
 "\\vc": "\\bold{c}"
@@ -399,6 +400,7 @@
 "\\etZ": "\\etens{Z}"
 
 # distributions
+"\\pdata": "p_\\textrm{data}"
 "\\laplace": "\\mathrm{Laplace}"
 "\\E": "\\mathbb{E}"
 "\\Ls": "\\mathcal{L}"
