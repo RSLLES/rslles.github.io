@@ -1,5 +1,5 @@
 baseURL: https://romainseailles.fr
-languageCode: en-us
+locale: en-us
 title: Romain Séailles
 theme: ["PaperMod"]
 

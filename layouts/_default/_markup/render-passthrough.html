@@ -15,7 +15,7 @@
   {{- end -}}
 {{- end -}}
 
-{{- $macros := site.Data.math_macros | default (dict) -}}
+{{- $macros := hugo.Data.math_macros | default (dict) -}}
 {{- $opts := dict
   "output" "htmlAndMathml"
   "displayMode" (eq .Type "block")
