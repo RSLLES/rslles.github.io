@@ -1,6 +1,7 @@
 ---
 title: "Average shifted histogram"
 date: 2026-01-14
+lastmod: 2026-10-28
 draft: false
 bib:
   - id: "scott1985averaged"
@@ -34,7 +35,7 @@ For 1D data, it is formed by first dividing $\R$ into equal-sized intervals call
 
 Formally, given a fixed bin width $h > 0$ and an origin $t_0$, let $B_k^{(0)} = [t_0 + kh, t_0 + (k+1)h)$ be the k-th interval.
 Given $N$ random samples $\{ x_1, \dots, x_N \}$, 
-we denote by $\nu: \mathcal P(\R) \to \N$ the normalized counting operator of our dataset, that returns the ratio of points belonging to a given subset $\gE$ of $\R$:
+we denote by $\nu: \mathcal P(\R) \to [0, 1]$ the normalized counting operator of our dataset, that returns the ratio of points belonging to a given subset $\gE$ of $\R$:
 
 $$ \nu (\gE) = \frac{1}{N} \sum_{i=1}^N \1(x_i \in \gE) $$
 
@@ -47,13 +48,13 @@ $$
 Clearly, $\sum_k \nu (B_k^{(0)}) = 1$ and $\int {\hat f} = 1$. 
 
 The naive histogram implementation computation is extremely efficient: 
-for a given value $x_i$, one can compute the corresponding index, $p = \lfloor \frac{x_i}{h} \rfloor$, and increment a pre-allocated array at the corresponding index, `array[p] += 1`. 
+for a given value $x_i$, one can compute the corresponding index, $k = \floor{\frac{x_i - t_0}{h}}$, and increment a pre-allocated array at the corresponding index, `array[k] += 1`. 
 This yields a $\mathcal O(N)$ complexity algorithm - moreover, with only one scan over the data - where $N$ is the number of input data points.
 
 At first glance, histogram is only governed by one parameter (just like more complex non-parametric distribution estimation methods like KDE), that is the bin size - or bandwidth - $h$.
 But there is one hidden parameter that is often left aside: **the origin offset $t_0$**.
 While it may seem inoffensive, changing $t_0$ may have great consequences on the final graph.
-The following figure ({{< citep "scott2010averaged" >}}) shows histograms of the estimated distance (in feet) of Sammy Sosa’s 36 home runs hit at at home in Chicago’s Wrigley Field among the 66 home runs he scored during the 1998 baseball season. 
+The following figure ({{< citep "scott2010averaged" >}}) shows histograms of the estimated distance (in feet) of Sammy Sosa’s 36 home runs hit at home in Chicago’s Wrigley Field among the 66 home runs he scored during the 1998 baseball season. 
 Each histogram has a bin size of 25 feet but three different choices of $t_0$:
 
 ![Figure 1](./t0_impact.avif)
@@ -62,7 +63,7 @@ As one may see, they look very different from each other, highlighting the impac
 Furthermore, as shown by {{< citet "freedman1981histogram" >}}, assuming one knows the sampling density $f$ (which we don't in practice), the "optimal" bin width formula in some sense is: 
 
 $$
-h^* = \left[ \frac{6}{N\int f'(x)^2 dx} \right]^{1/3}
+h^* = \left[ \frac{6}{N\int f'(x)^2 \dd x} \right]^{1/3}
 $$
 
 One may notice that $t_0$ is not part of this formula; therefore, it makes sense to treat $t_0$ as a nuisance parameter, that should not have such an important impact on the end-result.
@@ -71,7 +72,7 @@ One may notice that $t_0$ is not part of this formula; therefore, it makes sense
 
 To minimize the impact of $t_0$ on the end results, {{< citet "scott1985averaged" >}} have proposed a new method called **average shifted histogram** (ASH).
 
-The core idea is simple: given a bin size $h$ and an integer $n$, compute $m$ histograms all with the same bin size $h$ but with **shifted origins**, and
+The core idea is simple: given a bin size $h$ and an integer $m$, compute $m$ histograms all with the same bin size $h$ but with **shifted origins**, and
 **average them all together** to yield a new histogram.
 The result is a smoother histogram with bin size $h/m$, as depicted in the next figure ({{< citep "scott2010averaged" >}}) for different values of $m$:
 
@@ -115,7 +116,7 @@ $$
 Well, I agree that it does not look simplified at all.
 To simplify this, let's pause a minute and consider the different roles of the terms of this sum.
 After careful inspection, **the previous expression of $\hat f(x)$ is only a weighted sum of the count values of other bins, with a coefficient that depends on the anchor bin containing $x$** ($b_{km+j+q}$ in the equation) **and the considered bin whose value interests us** ($b_{km+j+p}$ in the equation). 
-If we can find the number of times the count value $\nu \left( b_s \right)$ of a specific bin $b_s$ interacts when $x$ belongs to another anchor bin $b_r$, if we denote this number $C_{s,r}$, then we could re-write this equation in the form:
+If we can find the number of times the count value $\nu \left( b_s \right)$ of a specific bin $b_s$ interacts when $x$ belongs to another anchor bin $b_r$, if we denote this number $C_{r,s}$, then we could re-write this equation in the form:
 
 $$
 \hat f(x) = \frac{1}{mh} \sum_{r} \sum_{s} \1(x \in b_{r}) C_{r,s} \nu \left( b_{s} \right)
@@ -124,8 +125,8 @@ $$
 Therefore, let's consider the following question: 
 **how many times does a specific neighbor bin $b_{s}$ (whose count value $\nu \left( b_{s} \right)$ is of interest) interact with a specific anchor bin $b_{r}$ containing $x$ ?**
 
-Let $D$ be the index-distance between those two bins.
-We have that $D = s-r=km+j+p - (km+j+q) = p - q$. 
+Let $d$ be the index-distance between those two bins.
+We have that $d = s-r=km+j+p - (km+j+q) = p - q$. 
 Both local sum indices $p$ and $q$ range from $0$ to $m-1$, taking $m$ different values: if we compute the matrix of differences $p-q$ for all possible pairs, we get:
 
 $$
@@ -141,31 +142,31 @@ $$
 Say our target is a distance of 0; then we can visually read that there are exactly $m$ combinations of $p$ and $q$ that yield this null distance: they are the elements of the main diagonal. 
 If we are looking for a target distance of $-1$, then there are $m-1$ combinations: those are the values on the lower sub-diagonal. 
 
-Following this reasoning, you can convince yourself that the number of interactions between two bins separated by a distance of $p-q$ is exactly:
-$$ C_{p-q} = \left( m - |p-q| \right)_+.$$
+Following this reasoning, you can convince yourself that the number of interactions between two bins separated by a distance of $d$ is exactly:
+$$ C_d = \left( m - \abs{d} \right)_+.$$
 
-Plugging this into our previous equation yields the following form for  
+Plugging this into our previous equation yields the following form for $\hat f$:
 
 $$
-\hat f(x) = \frac{1}{mh} \sum_{r} \sum_{d} \1(x \in b_{r}) C_d \nu \left( b_{k+s} \right)
+\hat f(x) = \frac{1}{mh} \sum_{r} \sum_{d} \1(x \in b_{r}) C_d \nu \left( b_{r+d} \right)
 $$
 
 Ultimately, those derivations lead us to the definition of a new piecewise constant function defined on the atomic bins $b_k$, but **in contrast to a classic histogram, the value associated to each bin is computed by applying a triangular convolution kernel** over the raw counts:
 
 $$
-\hat f(x) = \frac{1}{h} \sum_{k} \1(x \in b_{k}) \sum_{d=-m+1}^{m+1}K_d \nu \left( b_{d} \right)
+\hat f(x) = \frac{1}{h} \sum_{k} \1(x \in b_{k}) \sum_{d=-m+1}^{m-1} K_d \, \nu \left( b_{k+d} \right)
 \quad \text{where} \quad
-K_d = \left( 1 - \frac{|d|}{m} \right)_+
+K_d = \left( 1 - \frac{\abs{d}}{m} \right)_+
 $$
 
 It should be noted that the previous derivations are not rigorous enough to be a proper demonstration: playing with intricated sums can quickly get technical, and we redirect the reader to {{< citet "scott1985averaged" >}} for detailed proofs.
 
 Another - maybe more intuitive - way to understand this phenomenon is to realize that **ASH effectively convolves two rectangular functions** (also called [boxcar filters](https://en.wikipedia.org/wiki/Rectangular_function)), which naturally **yields a triangular kernel**.
 
-All this theory yields a highly efficient implementation for ASH: instead of managing $m$ histograms concurrently, one can store a single high-resolution histogram of bin size $h/m$, and at the last moment convolve it with a triangular kernel of size $2m−1$.
-Thus, ASH has a $\gO(N)$ computational complexity — similar to a simple histogram — but has a higher cost of $\gO(mN)$ in memory.
+All this theory yields a highly efficient implementation for ASH: instead of managing $m$ histograms concurrently, one can store a single high-resolution histogram of bin size $h/m$, and at the last moment convolve it with a triangular kernel of size $2m-1$.
+Thus, ASH still has a $\gO(N)$ computational complexity — similar to a simple histogram — but uses $m$ times more memory than a simple histogram of bin width $h$, since the high-resolution histogram has $m$ times more bins.
 
-In practice, while the triangular kernel is the exact mathematical tool, it tends to produce noisy results. It is common practice to substitute it for a smoother kernel, for instance, the triweight kernel, as recommended by {{< citep "scott2010averaged" >}}:
+In practice, while the triangular kernel is the exact mathematical tool, it tends to produce noisy results. It is common practice to substitute it for a smoother kernel, for instance, the triweight kernel, as recommended by {{< citet "scott2010averaged" >}}:
 
 $$
 K_d = \frac{35}{32}\left(1-\left(\frac{d}{m}\right)^2\right)_+^3

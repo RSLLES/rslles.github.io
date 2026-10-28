@@ -1,6 +1,7 @@
 ---
 title: "Self-supervised learning is about informative signals"
 date: 2026-07-22
+lastmod: 2026-10-28
 draft: false
 bib:
   - id: "kepler1611"
@@ -178,7 +179,7 @@ Therefore, it is the inexactness of any hand-crafted set of properties, combined
 Nevertheless, switching to self-supervised approaches --- meaning weaker training signals --- has enabled groundbreaking advances in deep learning, as it has enabled training on orders-of-magnitude larger datasets.
 
 Here is my own loose way to think about this tradeoff: training is a bit like estimating a quantity from i.i.d values in statistics.
-If your estimator has a variance $\sigma$ for a single sample, the error shrinks roughly as $\sigma/\sqrt{N}$, where $N$ is your total sample count.
+If your estimator has a standard deviation $\sigma$ for a single sample, the error shrinks roughly as $\sigma/\sqrt{N}$, where $N$ is your total sample count.
 Supervised learning loss function achieves the smallest possible $\sigma$ (also known as a fully efficient estimator, one that reaches the [Cramér–Rao bound](https://en.wikipedia.org/wiki/Cram%C3%A9r%E2%80%93Rao_bound)): it provides the sharpest training signal possible.
 By contrast, imperfect, hand-crafted, self-supervised objectives yield larger $\sigma$ but earn back an $N$ that is orders of magnitude bigger by enabling larger datasets.
 And empirically, that trade has paid off.
@@ -213,13 +214,13 @@ This is the **representation collapse issue** ({{< citep "chen2021simsiam" >}}),
 ![Contrastive learning](./contrastive.avif)
 
 SimCLR ({{< citep "chen2020simple" >}}) tackles this by leveraging the size of the dataset: **two randomly picked images are likely different objects**.
-Suppose the representation space is the unit sphere $\{ z \in \R^d : ||z||_2 = 1 \}$.
+Suppose the representation space is the unit sphere $\{ \vz \in \R^d : \norm{\vz}_2 = 1 \}$.
 One can then align an image with its augmented view (built from the invariances above) by maximizing $\dotprod{\vz_1}{\vz_1'}$, and push dissimilar images apart by minimizing $\dotprod{\vz_1}{\vz_2}$.
 The first term learns the invariance, the second shapes the latent space.
 
 In practice, SimCLR replaces this toy loss with the softmax-based **InfoNCE** loss, contrasting each view against every other view in the batch at once, with a temperature $\tau$ controlling how sharply negatives are pushed apart:
 
-$$ \Ls(\vz_1, \vz_1') = -\log \frac{\exp(\dotprod{\vz_1}{\vz_1'}/\tau)}{\sum_{k \neq 1} \exp(\dotprod{\vz_1}{\vz_k}/\tau)}. $$
+$$ \Ls(\vz_1, \vz_1') = -\log \frac{\exp(\dotprod{\vz_1}{\vz_1'}/\tau)}{\exp(\dotprod{\vz_1}{\vz_1'}/\tau) + \sum_{k \neq 1} \exp(\dotprod{\vz_1}{\vz_k}/\tau)}. $$
 
 Following this idea of positive-negative pairs --- known as **contrastive learning** ---, {{< citet "radford2021learning" >}} create CLIP by replacing an augmented pair $(\text{image}_1, \text{image}_1')$ with an image-caption pair $(\text{image}_1, \text{caption of image}_1)$, mapping images and text into a shared space and paving the way for modern VLMs.
 
@@ -233,7 +234,7 @@ Let's view the embedding as a random variable $\rz = f_\theta (\rvx)$, where $\r
 A collapsed representation means $\rz = \cst$, i.e. $\Var(\rz) = 0$.
 A natural fix is then to force the embedding to vary, e.g. by imposing $\Var(\rz) = 1$.
 
-Barlow Twins ({{< citet "zbontar2021barlow" >}}) avoids representation collapse this way, through normalization.
+Barlow Twins ({{< citep "zbontar2021barlow" >}}) avoids representation collapse this way, through normalization.
 Let $\rvx'$ be another view of the same image $\rvx$, and $\rz' = f_\theta (\rvx')$.
 A natural objective is then to maximize the [Pearson correlation coefficient](https://en.wikipedia.org/wiki/Pearson_correlation_coefficient) between the two views:
 
@@ -244,7 +245,7 @@ This single term does two things at once: it pulls the two views together, and i
 Embeddings are usually $d$-dimensional rather than scalar (hence denoted in bold from here on, $\rvz$ and $\rvz'$). {{< citet "zbontar2021barlow" >}} add a second idea: each component of the vector should carry different information, i.e. for $i \neq j$ we want $\Cov([\rvz]_i, [\rvz']_j) = 0$.
 Combined, this means pushing the whole cross-correlation matrix toward the identity:
 
-$$\Ls(\rvz, \rvz') = \frobenius{\rmC}{\mI} \quad \text{where} \; 
+$$\Ls(\rvz, \rvz') = \frobeniusnorm{\rmC - \mI}^2 \quad \text{where} \; 
 [\rmC]_{i,j} = \rho([\rvz]_i, [\rvz']_j)
 $$
 
@@ -257,19 +258,19 @@ VICReg ({{< citep "bardes2022vicreg" >}}) later disentangles these into three se
 
 ![LeJEPA](./lejepa.avif)
 
-Another way to read Barlow Twins is as shaping the distribution of the embeddings: it constrains the distribution to have unit variance long every axis.
+Another way to read Barlow Twins is as shaping the distribution of the embeddings: it constrains the distribution to have unit variance along every axis.
 
 LeJEPA ({{< citep "balestriero2025lejepa" >}}) takes this further, and **explicitly targets a specific shape for the embeddings distribution**.
-The authors show that, in the absence of any knowledge of the downstream task, **the optimal shape for the latent space is a full isotropic Gaussian**: if $\rvx$ ranges over all possible inputs, we want to enforce $f_\theta(\rvx) \sim \gN(0, \mI)$.
+The authors show that, in the absence of any knowledge of the downstream task, **the optimal shape for the latent space is a full isotropic Gaussian**: if $\rvx$ ranges over all possible inputs, we want to enforce $f_\theta(\rvx) \sim \normal(\vzero, \mI)$.
 Their loss combines an invariance term with a distribution-matching term:
 
-$$\Ls(\rvz, \rvz') = ||\rvz - \rvz'||_2^2 + D(\rvz, \gN(0, \mI)),$$
+$$\Ls(\rvz, \rvz') = \E \left[ \norm{\rvz - \rvz'}_2^2 \right] + D(p_{\rvz}, \normal(\vzero, \mI)),$$
 
 where $D$ is an integral probability metric. 
-They propose to use the Epps--Pulley normality test applied to random 1D projections of the embeddings for D --- which, to the best of my knowledge, is equivalent to the invariant-kernel MMD objective I derived in a [previous post](/posts/mmd/). 
+They propose to use the Epps--Pulley normality test applied to random 1D projections of the embeddings for $D$ --- which, to the best of my knowledge, is equivalent to the invariant-kernel MMD objective I derived in a [previous post](/posts/mmd/). 
 They argue that this estimator is trivial to parallelize, linear in complexity, and is more robust than the "first two moment-matching" approach of Barlow Twins.
 
-You can see the same idea at work in DINOv2 ({{< citep "oquab2023dinov2" >}}) through the KoLeo regularizer, which instead targets a uniform distribution on the $d$-hyperball --- I also wrote a [full post on it](/posts/koleo_regularization/) if you want the details.
+You can see the same idea at work in DINOv2 ({{< citep "oquab2023dinov2" >}}) through the KoLeo regularizer, which instead targets a uniform distribution on the unit hypersphere --- I also wrote a [full post on it](/posts/koleo_regularization/) if you want the details.
 
 ### Literally "self-supervised" through distillation
 

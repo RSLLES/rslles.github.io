@@ -1,6 +1,7 @@
 ---
 title: "The REINFORCE algorithm"
 date: 2026-05-24
+lastmod: 2026-10-28
 draft: false
 bib:
   - id: "williams1992simple"
@@ -75,7 +76,7 @@ Alternatively, when $\Ls(\rvx)$ is *not* differentiable, we introduce a surrogat
 
 To optimize this objective with first-order optimization methods --- think of gradient descent ---, we need access to $\nabla_\theta F(\theta)$. Naively computing this quantity gives:
 
-$$ \nabla_\theta F(\theta) = \nabla_\theta \int_{X} \Ls(x) p_\theta(x) dx = \int_{X} \Ls(x) \nabla_\theta p_\theta(x) dx \label{naive}.$$
+$$ \nabla_\theta F(\theta) = \nabla_\theta \int_{X} \Ls(x) p_\theta(x) \dd x = \int_{X} \Ls(x) \nabla_\theta p_\theta(x) \dd x \label{naive}.$$
 
 Swapping the gradient with the integral comes from the [Dominated convergence theorem](https://en.wikipedia.org/wiki/Dominated_convergence_theorem) (DCT).
 This integral may be tractable when $p_\theta$ is a very simple distribution, like a Gaussian, but this is unsuited for larger real-world scenarios when distributions can be much more complex, like trajectories or policies for games.
@@ -86,8 +87,8 @@ If we apply this formula in {{< eqref "naive" >}}:
 
 $$ 
 \begin{split}
-\nabla_\theta F(\theta) &= \int_{X} \Ls(x) \nabla_\theta p_\theta(x) dx = \int_{X} \Ls(x) p_\theta(x) \nabla_\theta \log p_\theta(x) dx \\ 
-&= \int_{X} \left [ \Ls(x) \nabla_\theta \log p_\theta(x) \right] p_\theta(x) dx =  \E_{\rvx \sim p_\theta} \left[ \Ls(\rvx) \nabla_\theta \log p_\theta(\rvx) \right].
+\nabla_\theta F(\theta) &= \int_{X} \Ls(x) \nabla_\theta p_\theta(x) \dd x = \int_{X} \Ls(x) p_\theta(x) \nabla_\theta \log p_\theta(x) \dd x \\ 
+&= \int_{X} \left [ \Ls(x) \nabla_\theta \log p_\theta(x) \right] p_\theta(x) \dd x =  \E_{\rvx \sim p_\theta} \left[ \Ls(\rvx) \nabla_\theta \log p_\theta(\rvx) \right].
 \end{split}
 $$
 
@@ -97,9 +98,9 @@ and naturally $\E[\rvz]$ can be approximated by a Monte-Carlo estimator.
 
 ## Improving the variance
 
-Now, while this algorithm is unbiased, meaning it does converge to the true gradient, it can have a gigantic --- sometimes infinite --- variance, meaning it is extremely noisy.
+Now, while this algorithm is unbiased, meaning its expectation equals the true gradient, it can have a gigantic --- sometimes infinite --- variance, meaning it is extremely noisy.
 And indeed, looking at the REINFORCE gradient estimate, the gradient signal is proportional to the value of $\Ls(\rvx)$.
-So what if we could modify $\Ls(\rvx)$ such that the bad values are negative, meaning they discourage, and the good ones are positive, meaning they push in the good direction?
+So what if we could modify $\Ls(\rvx)$ such that the bad (high-loss) values are positive, meaning they are discouraged, and the good ones are negative, meaning they are encouraged?
 
 This turns out to be a good idea and is termed a **baseline**: instead of minimizing $\Ls$, we optimize $\Ls - b$, where $b$ is a carefully chosen number that approximates the mean value of $\Ls$. 
 Mathematically, we can prove that adding such a baseline changes nothing to the problem.
@@ -111,7 +112,7 @@ Nothing fancy here, the expectation and the gradient are linear.
 But if you consider the second term, with the objective being a constant $b$, then it is the gradient of a stochastic objective ... where the objective does not depend on the sampled value? So naturally, the expectation should be a constant here, equal to $b$, and then the gradient would be 0.
 We can prove this in two lines:
 
-$$ \nabla_\theta\E_{\rvx \sim p_\theta} \left[ b \right] = \nabla_\theta \int_X b \, p_\theta(x)dx = b \nabla_\theta \underbrace{\int_X p_\theta(x) dx}_{=1} = b \nabla_\theta 1 = 0.$$
+$$ \nabla_\theta\E_{\rvx \sim p_\theta} \left[ b \right] = \nabla_\theta \int_X b \, p_\theta(x) \dd x = b \nabla_\theta \underbrace{\int_X p_\theta(x) \dd x}_{=1} = b \nabla_\theta 1 = 0.$$
 
 So adding an offset to $\Ls$ does not change the optimization of the objective, just like adding a constant to a differentiable objective does not change the gradient; it is the same underlying idea.
 
@@ -119,21 +120,21 @@ A good first step would be to pick the baseline $b$ that minimizes the variance 
 We have:
 
 $$\Var(b)
-= \E\left[ \|\rvz(b)\|_2^2 \right] - \|\E[\rvz(b)]\|_2^2 
-= \E\left[ (\Ls(\rvx) - b)^2 \|\nabla_\theta \log p_\theta(\rvx)\|_2^2 \right] + \cst.$$
+= \E\left[ \norm{\rvz(b)}_2^2 \right] - \norm{\E[\rvz(b)]}_2^2 
+= \E\left[ (\Ls(\rvx) - b)^2 \norm{\nabla_\theta \log p_\theta(\rvx)}_2^2 \right] + \cst.$$
 
 Indeed, the baseline does not change the expected value, i.e. $\E[ \rvz(b)] = \E[ \rvz(0)]$,
 thus the second term is independent of $b$.
 Taking the derivative with respect to $b$ and setting it to zero:
 
-$$\frac{d \Var}{db} = -2\E\left[(\Ls(\rvx) - b) \|\nabla_\theta \log p_\theta(\rvx)\|_2^2 \right] = 0.$$
+$$\frac{\dd \Var}{\dd b} = -2\E\left[(\Ls(\rvx) - b) \norm{\nabla_\theta \log p_\theta(\rvx)}_2^2 \right] = 0.$$
 
 Solving for $b$:
 
-$$b^* = \frac{\E\left[\Ls(\rvx) \|\nabla_\theta \log p_\theta(\rvx)\|_2^2 \right]}{\E\left[\|\nabla_\theta \log p_\theta(\rvx)\|_2^2\right]}.$$
+$$b^* = \frac{\E\left[\Ls(\rvx) \norm{\nabla_\theta \log p_\theta(\rvx)}_2^2 \right]}{\E\left[\norm{\nabla_\theta \log p_\theta(\rvx)}_2^2\right]}.$$
 
-The optimal baseline is the weighted expectation of $\Ls(\rvx)$ with weights $\|\nabla_\theta \log p_\theta(\rvx)\|_2^2 / \E\left[\|\nabla_\theta \log p_\theta(\rvx)\|_2^2\right]$. 
-These weights are hard to estimate in practice, so a good first choice for a baseline is simply the expected reward itself, $\E[\Ls(\rvx)]$.
+The optimal baseline is the weighted expectation of $\Ls(\rvx)$ with weights $\norm{\nabla_\theta \log p_\theta(\rvx)}_2^2 / \E\left[\norm{\nabla_\theta \log p_\theta(\rvx)}_2^2\right]$. 
+These weights are hard to estimate in practice, so a good first choice for a baseline is simply the expected loss itself, $\E[\Ls(\rvx)]$.
 
 ### One evaluation? Use an EMA baseline
 
@@ -188,12 +189,12 @@ $$b_i = \frac{1}{N-1}\sum_{j=1, j \neq i}^N \Ls(\vx_j) = \frac{1}{N-1}\left(  \l
 which means the loss function becomes:
 
 $$\Ls(\vx_i) - b_i = \frac{1}{N-1}\left(  N \Ls(\vx_i) - \sum_{j=1}^N \Ls(\vx_j) \right). $$
-The fact that we drop only the current element from the mean estimation --- hence making it unbiased --- is called the leave one out trick, and was first introduced by {{< citet "kool2019buy" >}}.
+The fact that we drop only the current element from the mean estimation --- hence making it unbiased --- is called the leave one out trick, and was popularized by {{< citet "kool2019buy" >}}.
 Additionally, with more samples, one may normalize by the group standard deviation
 
 $$\sigma_i = \sqrt{\frac{1}{N-2} \sum_{j=1, j \neq i}^N \left( \Ls(\vx_j) - b_i \right)^2},$$
 
-so the quantity $z_i = (\Ls(\vx_i) - b_i) / \sigma_i$ is approximately normally distributed, which keeps updates at a stable scale.
+so the quantity $z_i = (\Ls(\vx_i) - b_i) / \sigma_i$ is approximately standardized (zero mean, unit variance), which keeps updates at a stable scale.
 
 Here is a potential implementation: 
 
@@ -242,9 +243,9 @@ to the policy parameters cannot be computed directly. This is precisely where RE
 
 PPO is a REINFORCE method with two key contributions:
 
-1. **Clipping the gradient.** In vanilla REINFORCE, large updates occur when an unlikely sample
-   has a high reward: the log-probability term $\nabla_\theta \log p_\theta(\vx)$ is large for
-   low-probability samples, and multiplied by a large reward $\Ls(\vx)$, this causes instability.
+1. **Clipping the probability ratio.** In vanilla REINFORCE, large updates occur when an unlikely sample
+   has a large loss: the log-probability term $\nabla_\theta \log p_\theta(\vx)$ is large for
+   low-probability samples, and multiplied by a large $\Ls(\vx)$, this causes instability.
    PPO avoids this by clipping the probability ratio $r = p_\theta(\vx) / p_{\theta_\text{old}}(\vx)$ to stay within $[1-\varepsilon, 1+\varepsilon]$, preventing any single update from moving too far from the previous policy.
 
 2. **Critic as a learned baseline.** Rather than a global constant like an EMA, PPO uses a
@@ -274,8 +275,8 @@ The term "reparametrization trick" was largely popularized by the VAE paper ({{<
 The idea is to reformulate a parametric distribution $\rvx \sim p_\theta$ as a deterministic function of an external, non-parametric random variable: $\rvx = g_\theta(\rvz)$ where $\rvz \sim p$.
 Since $g_\theta$ is deterministic, you can now backpropagate through it normally.
 
-For instance, to sample from $\gN(\mu, \sigma^2)$ and differentiate with respect to $\mu$ and $\sigma$:
-$$\rvx = \mu + \sigma\, \rvz, \quad \rvz \sim \gN(0, 1).$$
+For instance, to sample from $\normal(\mu, \sigma^2)$ and differentiate with respect to $\mu$ and $\sigma$:
+$$\rvx = \mu + \sigma\, \rvz, \quad \rvz \sim \normal(0, 1).$$
 
 More generally, for any 1D distribution, this connects to [inverse transform sampling](https://en.wikipedia.org/wiki/Inverse_transform_sampling): pick $\rvz \sim \gU(0, 1)$ and set $\rvx = g_\theta(\rvz) = F_\theta^{-1}(\rvz)$, where $F_\theta$ is the CDF of $p_\theta$.
 

@@ -1,7 +1,7 @@
 ---
 title: "Maximum mean discrepancy"
 date: 2026-03-02
-lastmod: 2026-05-24
+lastmod: 2026-10-28
 draft: false
 bib:
   - id: "aronszajn1950theory"
@@ -84,7 +84,7 @@ Formally, it answers **the two-sample test**, that is a statistical test where t
 In practice, if you have $m$ samples $\mX = (\vx_1, \dots, \vx_m)$ from one distribution $p$ and $n$ samples $\mY = (\vy_1, \dots, \vy_n)$ from another distribution $q$, then the MMD between $\mX$ and $\mY$ will transcribe how close the distributions $p$ and $q$ are from each other.
 
 Let's have a look at the expression of the MMD.
-Given the previous samples $\mX$ and $\mY$ respectively from $p$ and $q$, we also define $k: \gX \times \gX \longmapsto \R$ to be a **positive definite kernel**, i.e. a two variables function that is *symmetric and positive semidefinite* ({{< citep "aronszajn1950theory" >}}).
+Given the previous samples $\mX$ and $\mY$ respectively from $p$ and $q$, we also define $k: \gX \times \gX \to \R$ to be a **positive definite kernel**, i.e. a two variables function that is *symmetric and positive semidefinite* ({{< citep "aronszajn1950theory" >}}).
 Then the MMD writes:
 $$
 \begin{split}
@@ -97,7 +97,7 @@ $$
 The kernel function can be thought of as a similarity function that measures how alike two elements are.
 In the expression of the MMD, the first two terms measure the average self-similarity within each distribution, i.e. how alike samples from the same distribution tend to be.
 The last term is a cross term that measures similarity across the two distributions.
-When $\mX = \mY$, all three terms cancel out and the MMD is null.
+When $p = q$, all three terms cancel out in expectation and the MMD is null.
 We redirect the curious reader to the excellent course of {{< citet "mairal2022kernel" >}} for additional information about kernel methods for machine learning.
 
 In machine learning, a common usage of MMD is to train **generative models**. 
@@ -116,26 +116,26 @@ Let's start with a basic characterisation in statistics.
 Let $\rvx$ be a random variable and $p$ a distribution on a topological space $\gX$.
 The [law of the unconscious statistician](https://en.wikipedia.org/wiki/Law_of_the_unconscious_statistician) (or [*théorème de transfert*](https://www.bibmath.net/dico/index.php?action=affiche&quoi=.%2Ft%2Ftransfert.html) in French) says:
 
-$$\rvx \sim p \Rightarrow \forall h \in \gC(\gX), \E_{\rvx \sim p}[h(\rvx)] = \int_\gX h(\vx) p(\vx) d\vx,$$
+$$\rvx \sim p \Rightarrow \forall h \in \gC(\gX), \E_{\rvx \sim p}[h(\rvx)] = \int_\gX h(\vx) p(\vx) \dd \vx,$$
 
-where $\gC(\gX)$ is the space of bounded continuous functions with values in $\mathbb{R}$.
+where $\gC(\gX)$ is the space of bounded continuous functions with values in $\R$.
 What is really of interest is that the reverse implication of this property holds ({{< citep "dudley2002real" >}}), providing a characterization of probability measures. 
 If $\rvx \sim p$ and $\rvy \sim q$, then:
-$$p=q \Leftrightarrow  \forall h \in \gC(\gX), \E_{\rvx \sim p}[h(\rvx)] = \mathbb E_{\rvy \sim q}[h(\rvy)].$$
+$$p=q \Leftrightarrow  \forall h \in \gC(\gX), \E_{\rvx \sim p}[h(\rvx)] = \E_{\rvy \sim q}[h(\rvy)].$$
 
 Using this characterization, we can see that if $\rvx$ and $\rvy$ do not follow the same distribution, then there must exist a function $h$ such that the expected values of $h(\rvx)$ and $h(\rvy)$ are different.
 Naturally, we expect that the more different $\rvx$ and $\rvy$, the easier it should be to find a function $h$ that exacerbates their difference.
 
 The fundamental idea of {{< citet "gretton2012kernel" >}} relies on this insight: they define **the MMD as the greatest possible difference between the expected values of $h(\rvx)$ and $h(\rvy)$ for a function $h$ in $\gH$ that maximizes this precise quantity**. In mathematical terms:
 
-$$\operatorname{MMD}[\gH, p, q] = \sup_{h \in \mathcal \gH} \left( \E_{\rvx \sim p}[h(\rvx)] - \E_{\rvy \sim q}[h(\rvy)]  \right).$$
+$$\operatorname{MMD}[\gH, p, q] = \sup_{h \in \gH} \left( \E_{\rvx \sim p}[h(\rvx)] - \E_{\rvy \sim q}[h(\rvy)]  \right).$$
 
 Of course, finding a supremum over a space of functions is far from trivial.
 But this apparently complex optimization problem has a closed form for a very specific class of functions: when $h$ is restricted to the unit ball of a reproducing kernel Hilbert space (RKHS) ({{< citep "aronszajn1950theory" >}}) $\gH$.
 
 Let's pick a RKHS $\gH$.
 By the [Riesz representation theorem](https://en.wikipedia.org/wiki/Riesz_representation_theorem),
-we denote $\phi: \gX \longmapsto \gH$ the feature mapping of $\gH$ and the kernel $k(\vx, \vy) = \dotprod{\phi(\vx)}{\phi(\vy)}_\gH$ for $\vx, \vy \in \gX^2$.
+we denote $\phi: \gX \to \gH$ the feature mapping of $\gH$ and the kernel $k(\vx, \vy) = \dotprod{\phi(\vx)}{\phi(\vy)}_\gH$ for $(\vx, \vy) \in \gX^2$.
 
 Let $h$ be a function of $\gH$.
 For all $\vx \in \gX$, we have $h(\vx) = \dotprod{\phi(\vx)}{h}_\gH$.
@@ -143,8 +143,8 @@ We can use this property to derive a formula for $\E_{\rvx \sim p}[h(\rvx)]$:
 
 $$
 \begin{split}
-\E_{\rvx \sim p} (h(\rvx)) &= \int_{\vx \in \gX}{h(\vx)p(\vx)dx} = \int_{\vx \in \gX}{\dotprod{\phi(\vx)}{h}_\gH p(\vx)dx} \\
-&=  \dotprod{\int_{\vx \in \gX} \phi(\vx) p(\vx)dx}{h}_\gH = \dotprod{\mu_p}{h}_\gH,
+\E_{\rvx \sim p}[h(\rvx)] &= \int_{\vx \in \gX}{h(\vx)p(\vx) \dd \vx} = \int_{\vx \in \gX}{\dotprod{\phi(\vx)}{h}_\gH p(\vx) \dd \vx} \\
+&=  \dotprod{\int_{\vx \in \gX} \phi(\vx) p(\vx) \dd \vx}{h}_\gH = \dotprod{\mu_p}{h}_\gH,
 \end{split}
 $$
 
@@ -157,33 +157,33 @@ $$\E_{\rvx \sim p}[h(\rvx)] - \E_{\rvy \sim q}[h(\rvy)] = \dotprod{\mu_p - \mu_q
 
 Given the linearity of this expression, the supremum becomes obvious to calculate.
 To prevent an infinite result, we can restrict $\gH$ to the unit hyper-ball of the RKHS,
-i.e. working with $\gH' = \{h \in \mathcal \gH \; \text{such that} \; ||h||_\gH \leq 1\}$.
-Then, this quantity is maximized for $h=\frac{\mu_p - \mu_q}{||\mu_p - \mu_q||_\gH}$,
+i.e. working with $\gH' = \{h \in \gH \; \text{such that} \; \norm{h}_\gH \leq 1\}$.
+Then, this quantity is maximized for $h=\frac{\mu_p - \mu_q}{\norm{\mu_p - \mu_q}_\gH}$,
 that is the vector of norm 1 pointing in the exact direction of $\mu_p - \mu_q$.
 The formula to compute the MMD is then:
 
 $$
 \begin{split}
 \operatorname{MMD}[\gH', p, q]
-&= \sup_{\{h \in \mathcal \gH \; \text{such that} \; ||h||_\gH \leq 1\}} \left( \E_{\rvx \sim p}[h(\rvx)] - \E_{\rvy \sim q}[h(\rvy)]  \right) \\
-&= \dotprod{\mu_p - \mu_q}{\frac{\mu_p - \mu_q}{||\mu_p - \mu_q||_\gH}}_\gH \\
-&= ||\mu_p - \mu_q||_\gH.
+&= \sup_{\{h \in \gH \; \text{such that} \; \norm{h}_\gH \leq 1\}} \left( \E_{\rvx \sim p}[h(\rvx)] - \E_{\rvy \sim q}[h(\rvy)]  \right) \\
+&= \dotprod{\mu_p - \mu_q}{\frac{\mu_p - \mu_q}{\norm{\mu_p - \mu_q}_\gH}}_\gH \\
+&= \norm{\mu_p - \mu_q}_\gH.
 \end{split}
 $$
 
-{{< citet "gretton2012kernel" >}} have shown that the MMD is a metric, in the sense defined by {{< citet "dudley2002real" >}}, i.e. it satisfies symmetry, the triangle inequality, positivity, and $\operatorname{MMD}[\gH', p, q] = 0 \Rightarrow p=q$.
+{{< citet "gretton2012kernel" >}} have shown that, for a characteristic kernel (e.g. the RBF kernel), the MMD is a metric, in the sense defined by {{< citet "dudley2002real" >}}, i.e. it satisfies symmetry, the triangle inequality, non-negativity, and $\operatorname{MMD}[\gH', p, q] = 0 \Rightarrow p=q$.
 
 The last step is to find a way to compute this quantity.
 $\mu_p$ and $\mu_q$ are elements of $\gH$, i.e. functions, and are intractable as such.
 The whole philosophy of kernel methods in general is to use these high-level objects
-to prove some theory, but in the end to get back to simple expressions directly involving evaluation of the kernel $k: \gX \times \gX \longmapsto \R$, which is tractable.
+to prove some theory, but in the end to get back to simple expressions directly involving evaluation of the kernel $k: \gX \times \gX \to \R$, which is tractable.
 
 We can develop the expression of the MMD squared:
 
 $$
 \begin{split}
 \operatorname{MMD}^2[\gH', p, q]
-&= ||\mu_p - \mu_q||^2_\gH = \dotprod{\mu_p - \mu_q}{\mu_p - \mu_q}_\gH \\
+&= \norm{\mu_p - \mu_q}^2_\gH = \dotprod{\mu_p - \mu_q}{\mu_p - \mu_q}_\gH \\
 &= \dotprod{\mu_p}{\mu_p}_\gH -2\dotprod{\mu_p}{\mu_q}_\gH + \dotprod{\mu_q}{\mu_q}_\gH.
 \end{split}
 $$
@@ -277,56 +277,56 @@ $$
 
 This formulation enables online MMD estimation: it requires $\gO(1)$ memory cost and $\gO(n)$ computational cost, to the detriment of higher variance.
 
-With large datasets in machine learning, we may also encounter scenarios where the total number of samples is too high to compute the quadratic classic MMD, but a higher-order MMD than the simple $\hat{\operatorname{MMD}}_2$ can be computed.
+With large datasets in machine learning, we may also encounter scenarios where the total number of samples is too high to compute the quadratic classic MMD, but a higher-order MMD than the simple $\hat{\operatorname{MMD}}^2_2$ can be computed.
 You can generalize the previous idea by fixing a block size $b$ specific to your compute budget, and use the following estimator:
 
 $$
 \hat{\operatorname{MMD}}_{b\text{-linear}}^2[\mX, \mY] 
-= \frac{1}{n}\sum_{i=1}^n \hat{\operatorname{MMD}}^2_{b}[(\vx_{ib+1}, \dots, \vx_{(i+1)b}), (\vy_{ib+1}, \dots, \vy_{(i+1)b})] \\
+= \frac{1}{n}\sum_{i=1}^n \hat{\operatorname{MMD}}^2_{b}[(\vx_{(i-1)b+1}, \dots, \vx_{ib}), (\vy_{(i-1)b+1}, \dots, \vy_{ib})]
 $$
 
 ### Simplification for stationary kernels
 
 A kernel $k(\vx, \vy)$ is stationary if it depends only on the difference $\vu = \vx - \vy$, i.e. $k(\vx, \vy) = \psi(\vx - \vy)$.
-Among others, it includes the radial basis function kernel (RBF), $k_\text{RBF}(\vx, \vy) = \exp \left(- \frac{1}{2} ||\vx - \vy ||_2^2 / \sigma^2 \right)$ and the Laplace kernel, $k_\text{L}(\vx, \vy) = \exp \left(- \gamma ||\vx - \vy ||_1 \right)$.
+Among others, it includes the radial basis function kernel (RBF), $k_\text{RBF}(\vx, \vy) = \exp \left(- \frac{1}{2} \norm{\vx - \vy}_2^2 / \sigma^2 \right)$ and the Laplace kernel, $k_\text{L}(\vx, \vy) = \exp \left(- \gamma \norm{\vx - \vy}_1 \right)$.
 
 If you are familiar with the theory of linear shift-invariant systems, you may see where this is going.
 Because these kernels are translation invariant, **they are convolution kernels**, and then it may be a good idea to look at their Fourier transform.
 
-And indeed, a key result is [Bochner's theorem](https://en.wikipedia.org/wiki/Bochner's_theorem): an stationary kernel $\psi$ is s.p.d iff $\psi$ is the Fourier transform of a non negative measure spectral measure $\nu$:
+And indeed, a key result is [Bochner's theorem](https://en.wikipedia.org/wiki/Bochner's_theorem): a continuous stationary kernel $\psi$ is s.p.d iff $\psi$ is the Fourier transform of a finite non-negative measure $\nu$:
 
-$$k(\vx, \vy) = \psi (\vx - \vy) = \int_{\R^d} \exp \left( i \vw^T (\vx - \vy) \right) \nu(\vw) d\vw $$
+$$k(\vx, \vy) = \psi (\vx - \vy) = \int_{\R^d} \exp \left( i \vw^T (\vx - \vy) \right) \nu(\vw) \dd \vw $$
 
 Why is it convenient ? Well, this last integral is nothing more than a scalar product:
 
 $$ 
 \begin{split}
-k(\vx, \vy) &= \int_{\R^d} \exp \left( i \vw^T (\vx - \vy) \right) \nu(\vw) d\vw \\
-&= \int_{\R^d} \exp \left( i \vw^T \vx \right) \overline{\exp \left(i \vw^T \vy \right)} \nu(\vw) d\vw \\
+k(\vx, \vy) &= \int_{\R^d} \exp \left( i \vw^T (\vx - \vy) \right) \nu(\vw) \dd \vw \\
+&= \int_{\R^d} \exp \left( i \vw^T \vx \right) \overline{\exp \left(i \vw^T \vy \right)} \nu(\vw) \dd \vw \\
 &= \dotprod{\phi(\vx)}{\phi(\vy)}_\gH,
 \end{split}
 $$
 
 where the feature map $\phi(\vx)$ is a function from $\R^d$ to $\sC$ such that $\phi(\vx): \vw \longmapsto e^{i \vw^T \vx}$,
-and the dot product $\dotprod{.}{.}_\gH$ is the canonical dot product of two functions $a$ and $b$ with values in $\sC$ and for a measure $\nu$: $\dotprod{a}{b}_\gH = \int_{\R^d} a(\vw) \overline{b(\vw)} \nu(\vw) d\vw$.
+and the dot product $\dotprod{\cdot}{\cdot}_\gH$ is the canonical dot product of two functions $a$ and $b$ with values in $\sC$ and for a measure $\nu$: $\dotprod{a}{b}_\gH = \int_{\R^d} a(\vw) \overline{b(\vw)} \nu(\vw) \dd \vw$.
 
 Hence, with Bochner's theorem, we have found the analytic expression of the decomposition of the kernel according to the Riesz representation theorem.
 This is convenient: we can now compute each feature vector independently, e.g. over $p$:
 
-$$ \mu_p(\vw) = \int_{\vx \in \gX} [\phi(\vx)](\vw) p(\vx)d\vx 
-=  \int_{\vx \in \gX} e^{i \vw^T \vx} p(\vx)d\vx
-= \E_{\vx \sim p} \left[ e^{i \vw^T \vx} \right].
+$$ \mu_p(\vw) = \int_{\vx \in \gX} [\phi(\vx)](\vw) p(\vx) \dd \vx 
+=  \int_{\vx \in \gX} e^{i \vw^T \vx} p(\vx) \dd \vx
+= \E_{\rvx \sim p} \left[ e^{i \vw^T \rvx} \right].
 $$
 
 For readers familiar with Fourier analysis, this quantity is precisely the [characteristic function](https://en.wikipedia.org/wiki/Characteristic_function_(probability_theory)) of $p$, evaluated at $\vw$.
-In other words, **for a stationary kernel, the feature map will always be the characteristic function of the random variable.**
+In other words, **for a stationary kernel, the mean embedding $\mu_p$ will always be the characteristic function of the random variable.**
 
 Finally, given that we choose a normalized kernel, $\nu$ will be a probability measure, and thus we can re-write the MMD as an expectation:
 
 $$ \begin{split}
-\operatorname{MMD}^2(\gH, p, q) &= ||\mu_p - \mu_q ||_\gH^2 
-= \int_{\R^d} | \mu_p(\vw) - \mu_q(\vw) |^2 \; \nu(\vw) d\vw \\ 
-&= \E_{\vw \sim \nu} \left[ | \mu_p(\vw) - \mu_q(\vw) |^2 \right].
+\operatorname{MMD}^2[\gH', p, q] &= \norm{\mu_p - \mu_q}_\gH^2 
+= \int_{\R^d} \abs{\mu_p(\vw) - \mu_q(\vw)}^2 \; \nu(\vw) \dd \vw \\ 
+&= \E_{\rvw \sim \nu} \left[ \abs{\mu_p(\rvw) - \mu_q(\rvw)}^2 \right].
 \end{split}$$
 
 TLDR, **the specific structure of the kernel allows to directly compute the distribution embeddings instead of relying on the developed form of the MMD**.
@@ -334,10 +334,10 @@ And because all elements are expectations, we can approximate them using Monte-C
 
 The approximation by MC sums is exactly the idea of Random Fourier Features ({{< citep "rahimi2007random" >}}) applied to the MMD (RFF-MMD) ({{< citep "mukherjee2025minimax" >}}):
 
-$$\hat{\operatorname{MMD}}_\text{RFF}^2(X, Y)= \frac{1}{r} \sum_{k=1}^r |\hat \mu_p^{(k)} - \hat \mu_q^{(k)}|^2
+$$\hat{\operatorname{MMD}}_\text{RFF}^2[\mX, \mY]= \frac{1}{r} \sum_{k=1}^r \abs{\hat \mu_p^{(k)} - \hat \mu_q^{(k)}}^2
 \; \text{where} \; 
 \begin{cases}
-\vw_1, \dots, \vw_r \overset{\text{i.i.d}}{\sim} \nu &,\\
+\vw_1, \dots, \vw_r \iid \nu &,\\
 \hat \mu_p^{(k)} = \frac{1}{m}\sum_{j=1}^m e^{i \vw_k^T \vx_j} &,\\
 \hat \mu_q^{(k)} = \frac{1}{n}\sum_{j=1}^n e^{i \vw_k^T \vy_j} &.\\
 \end{cases} $$
@@ -351,8 +351,8 @@ Finally, here is a table of the distribution $\nu$ for the two most popular stat
 
 | Kernel  | Formula                                   | Probability dist. $\nu(\vw)$                                            | Notes                                |
 | :------ | :---------------------------------------- | :---------------------------------------------------------------------- | ------------------------------------ |
-| RBF     | $e^{-\frac{1}{2\sigma^2}\|\vx-\vy\|_2^2}$ | $\vw \sim \mathcal{N}(\mathbf{0},\, \sigma^{-2} I_d)$                   | Isotropic normal with std $1/\sigma$ |
-| Laplace | $e^{-\gamma\|\vx-\vy\|_1}$                | $\vw = (w_1, \dots, w_d)$ where $w_j \sim \mathrm{Cauchy}(0,\, \gamma)$ | Each component of $\vw$ is i.i.d     |
+| RBF     | $e^{-\frac{1}{2\sigma^2}\norm{\vx-\vy}_2^2}$ | $\vw \sim \normal(\vzero,\, \sigma^{-2} \mI_d)$                   | Isotropic normal with std $1/\sigma$ |
+| Laplace | $e^{-\gamma\norm{\vx-\vy}_1}$                | $\vw = (w_1, \dots, w_d)$ where $w_j \sim \mathrm{Cauchy}(0,\, \gamma)$ | Each component of $\vw$ is i.i.d     |
 
 
 ## Example usage
@@ -775,7 +775,7 @@ class SliceKernel(nn.Module):
         return reduce(kernels, dim=-1, mode=reduction)
 ```
 
-Note that this approach offers some guarantees when paired with the Riesz kernel: $K(\vx,\vy) = - \| \vx - \vy \|_2^r$ with $r \in (0,2)$.
+Note that this approach offers some guarantees when paired with the Riesz kernel: $K(\vx,\vy) = - \norm{\vx - \vy}_2^r$ with $r \in (0,2)$.
 {{< citet "hertrich2023generative" >}} proved that using random projections with a Riesz kernel is equivalent to the complete MMD with this kernel,
 which is neat for high-dimensional problems.
 Furthermore, in the special case of the Riesz kernel with `r=1`, a clever sorting trick reduces the MMD complexity from $\gO((n_1 + n_2)^2)$ to $\gO((n_1 + n_2) \log (n_1 + n_2))$, making it blazingly fast for a large number of high-dimensional objects.
