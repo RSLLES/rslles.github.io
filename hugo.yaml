@@ -12,6 +12,9 @@ params:
   author: Romain Séailles
   mainSections: ["posts"]
 
+  footer:
+    text: "Font is [Libron](https://github.com/nicoverbruggen/libron/tree/main)"
+
   # Main page options
   homeInfoParams:
     Title: Welcome
