@@ -141,14 +141,14 @@ In all rigour, when we say "solving an equation" in maths, we mean turning an in
 Interestingly, note that while the extensional form is unique, there may be multiple intensional definitions:
 
 $$ 
-\begin{aligned}
-\{1, 2\} &= \{ x \in \R : x^2 - 3x + 2 = 0 \} & \quad \text{// roots of a quadratic} \\
-&= \{ n \in \N : n!=n \} & \quad \text{// fixed points of factorial} \\
-&= \{ x \in \R : 2^x=2x \} & \quad \text{// double when exponentiated} \\
-&= \{ n \in \N : \exists a,b,c \in \N^*, \; a^n + b^n = c^n \} & \quad \text{// Fermat's Last Theorem} \\
-&= \{ n \in \N : n \in \{1, 2\} \} & \quad \text{// ... cheating ?} \\
+\begin{alignedat}{2}
+\{1, 2\} &= \{ x \in \R : x^2 - 3x + 2 = 0 \} && \enspace \text{// roots of a quadratic} \\
+&= \{ n \in \N : n!=n \} && \enspace \text{// fixed points of factorial} \\
+&= \{ x \in \R : 2^x=2x \} && \enspace \text{// double when exponentiated} \\
+&= \{ n \in \N : \exists a,b,c \in \N^*, a^n + b^n = c^n \} && \enspace \text{// Fermat's Last Theorem} \\
+&= \{ n \in \N : n \in \{1, 2\} \} && \enspace \text{// ... cheating ?} \\
 &= \dots
-\end{aligned}
+\end{alignedat}
 $$
 
 Definitions by [extension and intension](https://en.wikipedia.org/wiki/Extensional_and_intensional_definitions) generalize beyond mathematics.

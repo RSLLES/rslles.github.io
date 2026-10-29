@@ -89,7 +89,8 @@ Then the MMD writes:
 $$
 \begin{split}
 \hat{\operatorname{MMD}}^2[\mX, \mY] = \;
-&\frac{1}{m(m-1)}\sum_{1\leq i,j \leq m,j\neq i} k(\vx_i,\vx_j) + \frac{1}{n(n-1)}\sum_{1\leq i,j \leq n,j\neq i} k(\vy_i,\vy_j)\\
+&\frac{1}{m(m-1)}\sum_{1\leq i,j \leq m,j\neq i} k(\vx_i,\vx_j) \\
+&+ \frac{1}{n(n-1)}\sum_{1\leq i,j \leq n,j\neq i} k(\vy_i,\vy_j) \\
 &- \frac{2}{mn}\sum_{i=1}^m\sum_{j=1}^n k(\vx_i,\vy_j).
 \end{split}
 $$
@@ -205,7 +206,8 @@ $$
 \begin{split}
 \operatorname{MMD}^2[\gH', p, q]
 &= \dotprod{\mu_p}{\mu_p}_\gH -2\dotprod{\mu_p}{\mu_q}_\gH + \dotprod{\mu_q}{\mu_q}_\gH \\
-&= \E_{\rvx_1 \sim p, \rvx_2 \sim p}[k(\rvx_1, \rvx_2)] -2\E_{\rvx \sim p, \rvy \sim q}[k(\rvx, \rvy)] + \E_{\rvy_1 \sim q, \rvy_2 \sim q}[k(\rvy_1, \rvy_2)].
+&= \E_{\rvx_1 \sim p, \rvx_2 \sim p}[k(\rvx_1, \rvx_2)] -2\E_{\rvx \sim p, \rvy \sim q}[k(\rvx, \rvy)] \\
+&\quad + \E_{\rvy_1 \sim q, \rvy_2 \sim q}[k(\rvy_1, \rvy_2)].
 \end{split}
 $$
 
@@ -271,7 +273,8 @@ $$
 \begin{split}
 \hat{\operatorname{MMD}}_\text{linear}^2[\mX, \mY] 
 &= \frac{1}{n}\sum_{i=1}^n \hat{\operatorname{MMD}}^2_2[\vx_{2i-1}, \vx_{2i}, \vy_{2i-1}, \vy_{2i}] \\
-&= \frac{1}{n}\sum_{i=1}^n \left[ k(\vx_{2i-1}, \vx_{2i}) + k(\vy_{2i-1}, \vy_{2i}) - k(\vx_{2i-1}, \vy_{2i}) - k(\vx_{2i}, \vy_{2i-1}) \right].
+&= \frac{1}{n}\sum_{i=1}^n \left[ k(\vx_{2i-1}, \vx_{2i}) + k(\vy_{2i-1}, \vy_{2i}) \right. \\
+&\qquad \left. {} - k(\vx_{2i-1}, \vy_{2i}) - k(\vx_{2i}, \vy_{2i-1}) \right].
 \end{split}
 $$
 
