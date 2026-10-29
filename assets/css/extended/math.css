@@ -1,0 +1,12 @@
+/* Wide display equations scroll on their own instead of widening the page on phones.
+   The padding keeps tall symbols from being clipped by overflow-y. */
+.katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-block: 0.5em;
+}
+
+/* Keep KaTeX's hidden MathML inside scrolling tables, or it widens the page. */
+.md-content table {
+    position: relative;
+}
