@@ -18,9 +18,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      # Bump together with module.hugoVersion in hugo.yaml and the KaTeX stylesheet
-      # in layouts/partials/extend_head.html; the next step checks all three.
-      HUGO_VERSION: 0.168.0
       TZ: Europe/Paris
     steps:
       - name: Checkout
@@ -28,20 +25,6 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-      - name: Check Hugo and KaTeX versions
-        run: |
-          fail() { echo "::error::$1"; exit 1; }
-          pinned=$(grep -oP '^\s+max:\s*"\K[0-9.]+(?=")' hugo.yaml) || fail "No module.hugoVersion.max in hugo.yaml"
-          [ "$pinned" = "$HUGO_VERSION" ] || fail "hugo.yaml pins Hugo $pinned but the workflow installs $HUGO_VERSION"
-          bundled=$(curl -sf "https://raw.githubusercontent.com/gohugoio/hugo/v${HUGO_VERSION}/internal/warpc/js/package.json" \
-            | grep -oP '"katex":\s*"[\^~]?\K[0-9]+\.[0-9]+') || fail "Cannot read the KaTeX version bundled with Hugo $HUGO_VERSION"
-          linked=$(grep -oP 'katex@\K[0-9.]+(?=/dist/katex\.min\.css)' layouts/partials/extend_head.html) || fail "No KaTeX stylesheet in extend_head.html"
-          [ "${linked%.*}" = "$bundled" ] || fail "extend_head.html links KaTeX $linked but Hugo $HUGO_VERSION bundles KaTeX $bundled.x"
-          integrity=$(grep -oP 'integrity="\K[^"]+' layouts/partials/extend_head.html) || fail "No integrity hash in extend_head.html"
-          actual="sha384-$(curl -sf "https://cdn.jsdelivr.net/npm/katex@${linked}/dist/katex.min.css" | openssl dgst -sha384 -binary | openssl base64 -A)" \
-            || fail "Cannot download the KaTeX $linked stylesheet"
-          [ "$integrity" = "$actual" ] || fail "extend_head.html integrity does not match the KaTeX $linked stylesheet, expected $actual"
-          echo "KaTeX $linked matches Hugo $HUGO_VERSION (bundles KaTeX $bundled.x)"
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v6
@@ -50,6 +33,8 @@ jobs:
           mkdir -p "${HOME}/.local"
       - name: Install Hugo
         run: |
+          # Pinned by module.hugoVersion.max in hugo.yaml
+          HUGO_VERSION=$(grep -oP '^\s+max:\s*"\K[0-9.]+(?=")' hugo.yaml)
           curl -sLJO "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz"
           mkdir "${HOME}/.local/hugo"
           tar -C "${HOME}/.local/hugo" -xf "hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz"

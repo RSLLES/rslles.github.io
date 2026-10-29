@@ -1,7 +1,23 @@
 <head>
     {{ $noop := .WordCount }}
     {{ if .Page.Store.Get "hasMath" }}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.4/dist/katex.min.css"
-        integrity="sha384-u1zONI5gPXUx0UKI62c75/zww972y0v2rSK5ZYlVdS6xEuWDeZWUI66v6t1gvlXJ" crossorigin="anonymous">
+    {{- /* Link the stylesheet of the exact KaTeX version this Hugo renders math with. */ -}}
+    {{ $package := printf "https://raw.githubusercontent.com/gohugoio/hugo/v%s/internal/warpc/js/package.json" hugo.Version }}
+    {{ with resources.GetRemote $package }}
+    {{ $katex := index (transform.Unmarshal .Content) "devDependencies" "katex" }}
+    {{ $stylesheet := printf "https://cdn.jsdelivr.net/npm/katex@%s/dist/katex.min.css" $katex }}
+    {{ if not (findRE `^\d+\.\d+\.\d+$` $katex) }}
+    {{ errorf "Hugo %s pins KaTeX %q, not an exact version" hugo.Version $katex }}
+    {{ else }}
+    {{ with resources.GetRemote $stylesheet }}
+    <link rel="stylesheet" href="{{ $stylesheet }}"
+        integrity="{{ (. | fingerprint "sha384").Data.Integrity }}" crossorigin="anonymous">
+    {{ else }}
+    {{ errorf "Not found: %s (Hugo caches 404s: rebuild with --ignoreCache once it is fixed)" $stylesheet }}
+    {{ end }}
+    {{ end }}
+    {{ else }}
+    {{ errorf "Not found: %s (Hugo caches 404s: rebuild with --ignoreCache once it is fixed)" $package }}
+    {{ end }}
     {{ end }}
 </head>

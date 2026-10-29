@@ -99,8 +99,8 @@ caches:
   images:
     dir: :cacheDir/images
 
-# Same version as HUGO_VERSION in .github/workflows/hugo.yaml: local builds warn when they differ.
+# Hugo version of the project; the project reads from here to adapt everything else in .workflow
 module:
   hugoVersion:
-    min: "0.168.0"
-    max: "0.168.0"
+    min: "0.169.0"
+    max: "0.169.0"
