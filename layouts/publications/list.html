@@ -19,9 +19,6 @@
         {{- $papers = sort $papers "Date" "desc" }}
         {{- range $papers }}
         <li class="pub-bib-entry">
-            <span><strong>{{ .Params.author }}</strong>. </span>
-            <br />
-
             <span>
                 {{- if .Params.link -}}
                 <a href="{{ .Params.link }}" target="_blank">{{ .Title }}</a>
@@ -31,16 +28,19 @@
                 . </span>
             <br />
 
-            {{- with .Params.journal }}<span><em>{{ partial "expand.html" (dict "page" $ "text" .) }}</em>.</span><br />{{ end }}
+            <span><strong>{{ .Params.author }}</strong>. </span>
+            <br />
 
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <span>{{ .Date.Year }}.</span>
-                <span>
-                    {{- range .Params.extra }}
-                    [<a href="{{ .url }}" target="_blank">{{ .name }}</a>]
-                    {{- end }}
-                </span>
-            </div>
+            <span>
+                {{- with .Params.journal }}<em>{{ partial "expand.html" (dict "page" $ "text" .) }}</em>, {{ end -}}
+                {{ .Date.Year }}.</span>
+            <br />
+
+            <span>
+                {{- range .Params.extra }}
+                [<a href="{{ .url }}" target="_blank">{{ .name }}</a>]
+                {{- end }}
+            </span>
         </li>
         {{- end }}
     </ul>
@@ -61,18 +61,18 @@
                 . </span>
             <br />
 
-            {{- with .Params.context }}<span><em>{{ partial "expand.html" (dict "page" $ "text" .) }}</em>.</span><br />{{ end }}
+            <span>
+                {{- with .Params.context }}<em>{{ partial "expand.html" (dict "page" $ "text" .) }}</em>, {{ end -}}
+                {{ .Date.Year }}.</span>
+            <br />
 
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <span>{{ .Date.Year }}.</span>
-                <span>
-                    {{- range .Params.extra }}
-                    {{- if .url }}
-                    [<a href="{{ .url }}" target="_blank">{{ .name }}</a>]
-                    {{- end }}
-                    {{- end }}
-                </span>
-            </div>
+            <span>
+                {{- range .Params.extra }}
+                {{- if .url }}
+                [<a href="{{ .url }}" target="_blank">{{ .name }}</a>]
+                {{- end }}
+                {{- end }}
+            </span>
         </li>
         {{- end }}
     </ul>
