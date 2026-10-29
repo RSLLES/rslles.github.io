@@ -55,7 +55,7 @@
         height: 150px;
     }
 
-    .entry-footer {
+    .home-info .entry-footer {
         display: flex;
         justify-content: center;
     }

@@ -1,8 +1,10 @@
 {{- $scratch := newScratch }}
 
+{{- /* `page` is the page being rendered, `.` is the post: last edit and author show on the post page only, not in list entries. */}}
+
 {{- if not .Date.IsZero -}}
     {{- $lastmodSuffix := "" }}
-    {{- if gt (.Lastmod.Unix) (.Date.Unix) -}}
+    {{- if and page.IsPage (gt (.Lastmod.Unix) (.Date.Unix)) -}}
         {{- $lastmodSuffix = printf " (Last edit %s)" (.Lastmod | time.Format (default ":date_long" site.Params.DateFormat)) }}
     {{- end -}}
     {{- $scratch.Add "meta" (slice (printf "<span title='%s'>%s%s</span>" (.Date) (.Date | time.Format (default ":date_long" site.Params.DateFormat)) $lastmodSuffix)) }}
@@ -16,7 +18,7 @@
     {{- $scratch.Add "meta" (slice (printf "<span>%s</span>" (i18n "words" .WordCount | default (printf "%d words" .WordCount)))) }}
 {{- end }}
 
-{{- if not (.Param "hideAuthor") -}}
+{{- if and page.IsPage (not (.Param "hideAuthor")) -}}
     {{- with (partial "author.html" .) }}
         {{- $scratch.Add "meta" (slice (printf "<span>%s</span>" .)) }}
     {{- end }}
