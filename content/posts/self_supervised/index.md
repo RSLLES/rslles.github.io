@@ -214,7 +214,7 @@ This is the **representation collapse issue** ({{< citep "chen2021simsiam" >}}),
 ![Contrastive learning](./contrastive.avif)
 
 SimCLR ({{< citep "chen2020simple" >}}) tackles this by leveraging the size of the dataset: **two randomly picked images are likely different objects**.
-Suppose the representation space is the unit sphere $\{ \vz \in \R^d : \norm{\vz}_2 = 1 \}$.
+Suppose the representation space is the unit sphere $\S^{d-1} = \{ \vz \in \R^d : \norm{\vz}_2 = 1 \}$.
 One can then align an image with its augmented view (built from the invariances above) by maximizing $\dotprod{\vz_1}{\vz_1'}$, and push dissimilar images apart by minimizing $\dotprod{\vz_1}{\vz_2}$.
 The first term learns the invariance, the second shapes the latent space.
 

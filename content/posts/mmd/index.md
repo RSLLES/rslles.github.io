@@ -246,7 +246,7 @@ For $m$ and $n$ sufficiently large, this should not impact the MMD too much.
 The previous derived expression is not suited for online usage.
 Indeed, for any new point added to the dataset, we need to compute its application through the kernel against all previous points,
 meaning we need to keep the entire history, and have a quadratic scaling with respect to the number of samples.
-Below are two methods to downscale the complexity to $\gO(n)$: 
+Below are two methods to downscale the complexity to $\bigO(n)$: 
 the **linear MMD** approximation, which reduces complexity at the cost of a bigger variance,
 and a special identity with **stationary kernels**. 
 
@@ -278,7 +278,7 @@ $$
 \end{split}
 $$
 
-This formulation enables online MMD estimation: it requires $\gO(1)$ memory cost and $\gO(n)$ computational cost, to the detriment of higher variance.
+This formulation enables online MMD estimation: it requires $\bigO(1)$ memory cost and $\bigO(n)$ computational cost, to the detriment of higher variance.
 
 With large datasets in machine learning, we may also encounter scenarios where the total number of samples is too high to compute the quadratic classic MMD, but a higher-order MMD than the simple $\hat{\operatorname{MMD}}^2_2$ can be computed.
 You can generalize the previous idea by fixing a block size $b$ specific to your compute budget, and use the following estimator:
@@ -310,8 +310,8 @@ k(\vx, \vy) &= \int_{\R^d} \exp \left( i \vw^T (\vx - \vy) \right) \nu(\vw) \dd 
 \end{split}
 $$
 
-where the feature map $\phi(\vx)$ is a function from $\R^d$ to $\sC$ such that $\phi(\vx): \vw \longmapsto e^{i \vw^T \vx}$,
-and the dot product $\dotprod{\cdot}{\cdot}_\gH$ is the canonical dot product of two functions $a$ and $b$ with values in $\sC$ and for a measure $\nu$: $\dotprod{a}{b}_\gH = \int_{\R^d} a(\vw) \overline{b(\vw)} \nu(\vw) \dd \vw$.
+where the feature map $\phi(\vx)$ is a function from $\R^d$ to $\C$ such that $\phi(\vx): \vw \longmapsto e^{i \vw^T \vx}$,
+and the dot product $\dotprod{\cdot}{\cdot}_\gH$ is the canonical dot product of two functions $a$ and $b$ with values in $\C$ and for a measure $\nu$: $\dotprod{a}{b}_\gH = \int_{\R^d} a(\vw) \overline{b(\vw)} \nu(\vw) \dd \vw$.
 
 Hence, with Bochner's theorem, we have found the analytic expression of the decomposition of the kernel according to the Riesz representation theorem.
 This is convenient: we can now compute each feature vector independently, e.g. over $p$:
@@ -345,7 +345,7 @@ $$\hat{\operatorname{MMD}}_\text{RFF}^2[\mX, \mY]= \frac{1}{r} \sum_{k=1}^r \abs
 \hat \mu_q^{(k)} = \frac{1}{n}\sum_{j=1}^n e^{i \vw_k^T \vy_j} &.\\
 \end{cases} $$
 
-As you can see, there is no need to compute any $n \times m$ matrix: we have effectively reduced the complexity to $\gO(n)$ (assuming $m=n$).
+As you can see, there is no need to compute any $n \times m$ matrix: we have effectively reduced the complexity to $\bigO(n)$ (assuming $m=n$).
 
 This idea has been explored in numerous works: and {{< citet "balestriero2025lejepa" >}} use this algorithm to train the latest JEPA at the time of writing. 
 
@@ -638,8 +638,8 @@ def mmd_max(x: Tensor, y: Tensor, kernel: nn.Module, reduction: str) -> Tensor:
 With this new strategy, we have reached a validation metric of `0.133`.
 ![MMD max](./mmd_max.avif)
 
-MMD complexity is $\gO(d(m+n)^2)$ where $m$ and $n$ are the number of samples from each distribution and $d$ the dimension of the data ($d=2$ with our toy example).
-As explained before, with stationary kernels, we can reduce the complexity to $\gO(dmr+dnr)$ by introducing $r$ samples from the probability distribution associated with the kernel through Bochner's theorem.
+MMD complexity is $\bigO(d(m+n)^2)$ where $m$ and $n$ are the number of samples from each distribution and $d$ the dimension of the data ($d=2$ with our toy example).
+As explained before, with stationary kernels, we can reduce the complexity to $\bigO(dmr+dnr)$ by introducing $r$ samples from the probability distribution associated with the kernel through Bochner's theorem.
 For a RBF kernel, it is an isotropic normal distribution, hence we can play with the following code:
 
 ```python
@@ -781,7 +781,7 @@ class SliceKernel(nn.Module):
 Note that this approach offers some guarantees when paired with the Riesz kernel: $K(\vx,\vy) = - \norm{\vx - \vy}_2^r$ with $r \in (0,2)$.
 {{< citet "hertrich2023generative" >}} proved that using random projections with a Riesz kernel is equivalent to the complete MMD with this kernel,
 which is neat for high-dimensional problems.
-Furthermore, in the special case of the Riesz kernel with `r=1`, a clever sorting trick reduces the MMD complexity from $\gO((n_1 + n_2)^2)$ to $\gO((n_1 + n_2) \log (n_1 + n_2))$, making it blazingly fast for a large number of high-dimensional objects.
+Furthermore, in the special case of the Riesz kernel with `r=1`, a clever sorting trick reduces the MMD complexity from $\bigO((n_1 + n_2)^2)$ to $\bigO((n_1 + n_2) \log (n_1 + n_2))$, making it blazingly fast for a large number of high-dimensional objects.
 
 {{< citet "schrab2023mmd" >}} also recommend to use both Laplace and RBF kernels with their bandwidths selection strategy:
 ```python

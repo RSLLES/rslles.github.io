@@ -164,7 +164,7 @@ It should be noted that the previous derivations are not rigorous enough to be a
 Another - maybe more intuitive - way to understand this phenomenon is to realize that **ASH effectively convolves two rectangular functions** (also called [boxcar filters](https://en.wikipedia.org/wiki/Rectangular_function)), which naturally **yields a triangular kernel**.
 
 All this theory yields a highly efficient implementation for ASH: instead of managing $m$ histograms concurrently, one can store a single high-resolution histogram of bin size $h/m$, and at the last moment convolve it with a triangular kernel of size $2m-1$.
-Thus, ASH still has a $\gO(N)$ computational complexity — similar to a simple histogram — but uses $m$ times more memory than a simple histogram of bin width $h$, since the high-resolution histogram has $m$ times more bins.
+Thus, ASH still has a $\bigO(N)$ computational complexity — similar to a simple histogram — but uses $m$ times more memory than a simple histogram of bin width $h$, since the high-resolution histogram has $m$ times more bins.
 
 In practice, while the triangular kernel is the exact mathematical tool, it tends to produce noisy results. It is common practice to substitute it for a smoother kernel, for instance, the triweight kernel, as recommended by {{< citet "scott2010averaged" >}}:
 

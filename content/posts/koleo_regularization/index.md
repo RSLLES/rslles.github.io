@@ -154,16 +154,16 @@ Let's analyze the cumulative distribution function of $R_i$:
 
 $$
 \begin{split}
-\sP (R_i \leq \alpha \mid \vx_i) 
-&= 1 - \sP (R_i > \alpha \mid \vx_i) \\
-&= 1 - \prod_{j \neq i }\sP (\norm{\vx_i - \vx_j}_2 > \alpha \mid \vx_i) \\
-&= 1 - \prod_{j \neq i }\left(1 - \sP (\norm{\vx_i - \vx_j}_2 \leq \alpha \mid \vx_i) \right) \\
+\P (R_i \leq \alpha \mid \vx_i) 
+&= 1 - \P (R_i > \alpha \mid \vx_i) \\
+&= 1 - \prod_{j \neq i }\P (\norm{\vx_i - \vx_j}_2 > \alpha \mid \vx_i) \\
+&= 1 - \prod_{j \neq i }\left(1 - \P (\norm{\vx_i - \vx_j}_2 \leq \alpha \mid \vx_i) \right) \\
 \end{split}
 $$
 
-For $\vx_i$ fixed, the probability $\sP (\norm{\vx_i - \vx_j}_2 \leq \alpha \mid \vx_i)$  is the probability of $\vx_j$ being inside the ball of radius $\alpha$ centered around $\vx_i$:
+For $\vx_i$ fixed, the probability $\P (\norm{\vx_i - \vx_j}_2 \leq \alpha \mid \vx_i)$  is the probability of $\vx_j$ being inside the ball of radius $\alpha$ centered around $\vx_i$:
 
-$$\sP (\norm{\vx_i - \vx_j}_2 \leq \alpha \mid \vx_i) = \int_{\gB (\vx_i, \alpha)} f(\vx) \dd \vx$$
+$$\P (\norm{\vx_i - \vx_j}_2 \leq \alpha \mid \vx_i) = \int_{\gB (\vx_i, \alpha)} f(\vx) \dd \vx$$
 
 where $\gB(\vc, r)$ is the ball of radius $r \geq 0$ and center $\vc \in \R^d$.
 
@@ -189,17 +189,17 @@ This is both required - otherwise, the distance to the closest neighbour would n
 and acceptable - in the previous concert analogy, there are many people in the room.
 We can exploit this assumption to make the radius decrease:
 if we switch $R_i$ for $NR_i$ in our derivations, 
-we end up with $\sP (NR_i \leq \alpha \mid \vx_i) = \sP (R_i \leq \alpha/N \mid \vx_i)$, 
+we end up with $\P (NR_i \leq \alpha \mid \vx_i) = \P (R_i \leq \alpha/N \mid \vx_i)$, 
 meaning we have a decreasing $r \to 0$ when $N \to \infty$:
 
-$$\sP (\norm{\vx_i - \vx_j}_2 \leq \alpha / N \mid \vx_i) \underset{N \to \infty}{\simeq} f(\vx_i)V_{\alpha / N}
+$$\P (\norm{\vx_i - \vx_j}_2 \leq \alpha / N \mid \vx_i) \underset{N \to \infty}{\simeq} f(\vx_i)V_{\alpha / N}
 = f(\vx_i)V_1 \left(\frac{\alpha}{N} \right)^d$$
 
 And then:
 
 $$
 \begin{split}
-\sP (NR_i \leq \alpha \mid \vx_i) 
+\P (NR_i \leq \alpha \mid \vx_i) 
 &\underset{N \to \infty}{\simeq} 1 - \prod_{j \neq i }\left(1 - f(\vx_i)V_1 \left(\frac{\alpha}{N} \right)^d \right) \\
 &= 1 - \left(1 - f(\vx_i)V_1 \left(\frac{\alpha}{N} \right)^d \right)^{N-1} \\
 \end{split}
@@ -211,8 +211,8 @@ If we once again switch the analyzed variable $NR_i$ for $(N-1)R_i^d$, we can ap
 
 $$
 \begin{split}
-\sP ((N-1)R_i^d \leq \alpha \mid \vx_i) 
-&= \sP (R_i \leq \left( \frac{\alpha}{N-1} \right)^{1/d} \mid \vx_i)  \\
+\P ((N-1)R_i^d \leq \alpha \mid \vx_i) 
+&= \P (R_i \leq \left( \frac{\alpha}{N-1} \right)^{1/d} \mid \vx_i)  \\
 &\underset{N \to \infty}{\simeq} 1 - \left(1 - f(\vx_i)V_1 \frac{\alpha}{N-1} \right)^{N-1} \\
 &\underset{N \to \infty}{\simeq} 1 - \exp \left(- f(\vx_i)V_1 \alpha \right)
 \end{split}
@@ -258,7 +258,7 @@ we redirect the reader to {{< citet "delattre2017kozachenko" >}}.
 
 ## Implementation
 The KoLeo regularization can be implemented in a few lines of Python code with PyTorch.
-Note however that it has a $\gO(N^2)$ memory cost due to the pairwise distance computation.
+Note however that it has a $\bigO(N^2)$ memory cost due to the pairwise distance computation.
 
 ```python
 def koleo_reg(x : torch.Tensor, eps:float=1e-9) -> torch.Tensor:
