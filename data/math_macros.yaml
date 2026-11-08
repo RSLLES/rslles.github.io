@@ -48,8 +48,6 @@
 "\\1": "\\bold{1}"
 "\\eps": "\\epsilon"
 "\\Ls": "\\mathcal{L}"
-"\\lr": "\\alpha"
-"\\reg": "\\lambda"
 
 # Probability and statistics
 "\\P": "\\mathbb{P}"  # overrides ¶

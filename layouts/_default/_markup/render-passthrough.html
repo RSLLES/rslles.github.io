@@ -15,7 +15,19 @@
   {{- end -}}
 {{- end -}}
 
-{{- $macros := hugo.Data.math_macros | default (dict) -}}
+{{- /* Front matter math_macros (list of ['\name', 'definition'] pairs) overrides data/math_macros.yaml.
+  Pairs, not a map, and SetInMap, not merge: both front-matter keys and merge are case-insensitive. */ -}}
+{{- $macros := $.Page.Store.Get "math_macros" -}}
+{{- if not $macros -}}
+  {{- range $name, $definition := hugo.Data.math_macros }}{{ $.Page.Store.SetInMap "math_macros" $name $definition }}{{ end -}}
+  {{- range $.Page.Params.math_macros }}
+    {{- if not (and (reflect.IsSlice .) (eq (len .) 2)) }}
+      {{- errorf `Front matter math_macros entries must be ['\name', 'definition'] pairs, got %v: see %s.` . $.Position }}
+    {{- end }}
+    {{- $.Page.Store.SetInMap "math_macros" (index . 0) (index . 1) }}
+  {{- end -}}
+  {{- $macros = $.Page.Store.Get "math_macros" -}}
+{{- end -}}
 {{- $opts := dict
   "output" "htmlAndMathml"
   "displayMode" (eq .Type "block")
