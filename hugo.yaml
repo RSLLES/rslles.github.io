@@ -102,5 +102,5 @@ caches:
 # Hugo version of the project; the project reads from here to adapt everything else in .workflow
 module:
   hugoVersion:
-    min: "0.169.0"
-    max: "0.169.0"
+    min: "0.170.0"
+    max: "0.170.0"
