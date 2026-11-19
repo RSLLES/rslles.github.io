@@ -1,7 +1,7 @@
 ---
 title: "The REINFORCE algorithm"
 date: 2026-05-24
-lastmod: 2026-10-28
+lastmod: 2026-11-19
 draft: false
 bib:
   - id: "williams1992simple"
@@ -144,8 +144,8 @@ A natural idea is to use an Exponential Moving Average (EMA) to track a moving e
 Hence, we could implement reinforce with this trick:
 
 ```python
-class BaselineREINFORCE(nn.Module):
-    """REINFORCE loss function with the ema-baseline variance stabilizing trick."""
+class BaselineReinforce(nn.Module):
+    """REINFORCE loss function with the ema-baseline variance stabilizing trick [1]."""
 
     def __init__(
         self,
@@ -163,19 +163,10 @@ class BaselineREINFORCE(nn.Module):
         if self.ensure_detached_loss:
             loss = loss.detach()
 
-        reward = loss.mean()
-
-        if self.ema_mean.is_initialized:
-            mean = self.ema_mean.value()
-            std = self.ema_var.value().sqrt()
-            advantage = (loss - mean) / (std + self.eps)
-        else:
-            advantage = loss - loss.mean()
-
-        self.ema_mean.update(reward)
-        residual_sq = (reward - self.ema_mean.value()).pow(2)
-        self.ema_var.update(residual_sq)
-
+        # updating mean first biases the baseline, but bounds |advantage|
+        mean = self.ema_mean(loss.mean())
+        var = self.ema_var((loss - mean).square().mean())
+        advantage = (loss - mean) / (var.sqrt() + self.eps)
         return (advantage * log_prob).mean()
 ```
 
@@ -295,18 +286,18 @@ A simpler alternative is the **straight-through estimator** ({{< citep "bengio20
 Example for a Bernoulli distribution:
 
 ```python
-mask = torch.bernoulli(p) # p.requires_grad = True but mask.requires_grad = False
-mask = mask + p - p.detach() # mask.requires_grad = True with the gradient of p
+mask = torch.bernoulli(p)  # p.requires_grad = True but mask.requires_grad = False
+mask = mask + p - p.detach()  # mask.requires_grad = True with the gradient of p
 ```
 
 It can be combined with various [relaxations](#relaxations-for-discrete-rvs);
 for example, a hard categorical sampling can be paired with a Concrete relaxation:
 ```python
 noise = torch.distributions.Gumbel(0, 1).sample(logits.shape)
-soft = torch.softmax((logits + noise) / tau, dim=-1) # concrete relaxation
-idx  = soft.argmax(dim=-1, keepdim=True) # hard version 
+soft = torch.softmax((logits + noise) / tau, dim=-1)  # concrete relaxation
+idx = soft.argmax(dim=-1, keepdim=True)  # hard version
 hard = torch.zeros_like(soft).scatter_(-1, idx, 1.0)  # one-hot
-y    = hard + soft - soft.detach()  # hard in forward, soft gradient in backward
+y = hard + soft - soft.detach()  # hard in forward, soft gradient in backward
 ```
 
 This yields a biased estimator, but it is extremely cheap and often works surprisingly well in practice --- the intuition being that $\rvx$ and $\hat{\rvx}$ are close, so their gradients are approximately equal.
