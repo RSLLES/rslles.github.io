@@ -1,7 +1,7 @@
 ---
 title: "Maximum mean discrepancy"
 date: 2026-03-02
-lastmod: 2026-10-28
+lastmod: 2026-11-20
 draft: false
 bib:
   - id: "aronszajn1950theory"
@@ -548,40 +548,35 @@ A natural idea to leverage previously computed values is to use an exponential m
 
 ```python
 class ExpMovingAverage(nn.Module):
-    """Exponential moving average for a 1D Tensor."""
+    """Exponential moving average (bias-corrected)."""
 
-    mean: Tensor
-    is_initialized: Tensor
+    weighted_sum: Tensor
+    total_weight: Tensor
 
-    def __init__(self, lambd: float, n_values: int = 1) -> None:
+    def __init__(self, lambd: float, n_elements: int = 1) -> None:
         super().__init__()
         self.lambd = lambd
-        self.register_buffer("mean", torch.zeros((n_values,)))
-        self.register_buffer("is_initialized", torch.tensor(False, dtype=torch.bool))
-
-    @torch.compiler.disable
-    def _sync_values(self, x: Tensor) -> Tensor:
-        if dist.is_available() and dist.is_initialized():
-            x = x.clone()
-            dist.all_reduce(x, op=dist.ReduceOp.AVG)
-        return x
-
-    @torch.compiler.disable
-    def _initialize_buffer(self, x: Tensor):
-        x_synced = self._sync_values(x)
-        self.mean.copy_(x_synced)
-        self.is_initialized.fill_(True)
+        self.register_buffer("weighted_sum", torch.zeros((n_elements,)))
+        # 1 - (1 - lambd)^t after t updates; dividing by it removes the bias toward 0
+        self.register_buffer("total_weight", torch.zeros(()))
 
     @torch.no_grad()
-    def forward(self, x: Tensor) -> Tensor:
-        """Update the current ema and return the new value."""
-        if not self.is_initialized:
-            self._initialize_buffer(x)
-            return self.mean
-        x_synced = self._sync_values(x)
-        self.mean.mul_(1.0 - self.lambd).add_(x_synced, alpha=self.lambd)
-        return self.mean
+    def update(self, x: Tensor) -> None:
+        """Update the current ema."""
+        x_synced = reduce_across_ranks(x)
+        self.weighted_sum.mul_(1.0 - self.lambd).add_(x_synced, alpha=self.lambd)
+        self.total_weight.mul_(1.0 - self.lambd).add_(self.lambd)
 
+    def value(self) -> Tensor:
+        """Return the current estimate, NaN before the first update."""
+        return self.weighted_sum / self.total_weight
+
+    @torch.no_grad()
+    def forward(self, x: Tensor | None = None) -> Tensor:
+        """Update the ema if x is provided, and return the (updated) value."""
+        if x is not None:
+            self.update(x)
+        return self.value()
 
 class ExponentialKernel(nn.Module):
     """Kernel that includes both Laplace Kernel (p=1) and Gaussian Kernel (p=2)."""
@@ -830,22 +825,31 @@ Building upon this idea, {{< citet "biggs2023mmd" >}} proposes a fusion mechanis
 that kind of interpolates between taking a mean and a max, hoping to get the stability of the mean with the theoretical advantages of the max.
 
 ```python
+def _unbiased_mmd_sq(K: Tensor, n: int) -> Tensor:
+    """Unbiased squared MMD from the kernel matrix of [x; y], diagonal zeroed."""
+    m = K.size(1) - n
+    K_xx = K[:, :n, :n].sum(dim=(1, 2)) / (n * (n - 1))
+    K_yy = K[:, n:, n:].sum(dim=(1, 2)) / (m * (m - 1))
+    K_xy = K[:, :n, n:].mean(dim=(1, 2))
+    return K_xx + K_yy - 2.0 * K_xy
+
 def mmd_fuse(x: Tensor, y: Tensor, kernel: nn.Module, reduction: str) -> Tensor:
     N = x.size(1)
     xy = torch.cat([x, y], dim=1)
     K = kernel(xy, xy, reduction="none")
+    off_diagonal = ~torch.eye(K.size(1), dtype=torch.bool, device=K.device)
+    K = K * off_diagonal[:, :, None]
     n_kernels = torch.tensor(K.size(-1), device=K.device, dtype=K.dtype)
-    lambd = torch.sqrt(n_kernels * (n_kernels - 1.0))
+    n_samples = min(x.size(1), y.size(1))
+    lambd = math.sqrt(n_samples * (n_samples - 1))
 
-    K_xx = K[:, :N, :N].mean(dim=(1, 2))
-    K_yy = K[:, N:, N:].mean(dim=(1, 2))
-    K_xy = K[:, :N, N:].mean(dim=(1, 2))
-    mmd_sq = K_xx + K_yy - 2.0 * K_xy
+    mmd_sq = _unbiased_mmd_sq(K, N)
 
-    std = K.square().mean(dim=(1, 2)).sqrt()
+    std = (K.square().sum(dim=(1, 2)) / (n_samples * (n_samples - 1))).sqrt()
     mmd_norm = mmd_sq / (std + 1e-9)
     mmd_fused = (torch.logsumexp(lambd * mmd_norm, dim=-1) - n_kernels.log()) / lambd
     return reduce(mmd_fused, dim=0, mode=reduction)
+
 ```
 
 With this new aggregation mechanism, we reach a validation metric of `0.150`, so slightly worse than the `max` strategy.
